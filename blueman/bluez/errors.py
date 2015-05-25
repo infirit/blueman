@@ -3,8 +3,6 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import dbus
-
 
 class BluezDBusException(Exception):
     def __init__(self, reason):
@@ -132,9 +130,9 @@ __DICT_ERROR__ = {'org.bluez.Error.Failed:': DBusFailedError,
 def parse_dbus_error(exception):
     global __DICT_ERROR__
 
-    aux = "%s" % exception
-    aux_splt = aux.split(None, 1)
+    bluez_error_string = ("%s" % exception).split('g-io-error-quark: GDBus.Error:', 1)[1]
+    bluez_error_parts = bluez_error_string.split(None, 1)
     try:
-        return __DICT_ERROR__[aux_splt[0]](aux_splt[1])
+        return __DICT_ERROR__[bluez_error_parts[0]](bluez_error_parts[1])
     except KeyError:
-        return exception
+        return BluezDBusException(bluez_error_string)

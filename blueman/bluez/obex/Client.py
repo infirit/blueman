@@ -3,10 +3,9 @@ from __future__ import division
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import dbus
 from blueman.Functions import dprint
 from blueman.bluez.obex.Base import Base
-from gi.repository import GObject
+from gi.repository import GObject, Gio
 
 
 class ObexdNotFoundError(Exception):
@@ -21,8 +20,9 @@ class Client(Base):
     }
 
     def __init__(self):
-        obj = dbus.SessionBus().get_object('org.bluez.obex', '/')
-        introspection = dbus.Interface(obj, 'org.freedesktop.DBus.Introspectable').Introspect()
+        proxy = Gio.DBusProxy.new_for_bus_sync(Gio.BusType.SESSION, Gio.DBusProxyFlags.NONE, None, 'org.bluez.obex',
+                                               '/', 'org.freedesktop.DBus.Introspectable', None)
+        introspection = proxy.call_sync('Introspect', None, Gio.DBusCallFlags.NONE, -1, None).unpack()[0]
         if 'org.freedesktop.DBus.ObjectManager' not in introspection:
             raise ObexdNotFoundError('Could not find any compatible version of obexd')
 
@@ -37,7 +37,7 @@ class Client(Base):
             dprint(dest_addr, source_addr, pattern, error)
             self.emit("session-failed", error)
 
-        self._call('CreateSession', dest_addr, {"Source": source_addr, "Target": pattern},
+        self._call('CreateSession', 'sa{sv}', dest_addr, {"Source": source_addr, "Target": pattern},
                    reply_handler=on_session_created, error_handler=on_session_failed)
 
     def remove_session(self, session_path):
@@ -48,5 +48,5 @@ class Client(Base):
         def on_session_remove_failed(error):
             dprint(session_path, error)
 
-        self._call('RemoveSession', session_path, reply_handler=on_session_removed,
+        self._call('RemoveSession', 'o', session_path, reply_handler=on_session_removed,
                    error_handler=on_session_remove_failed)

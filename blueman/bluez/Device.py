@@ -4,7 +4,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from blueman.bluez.PropertiesBase import PropertiesBase
-from blueman.bluez.errors import parse_dbus_error
 
 
 class Device(PropertiesBase):
@@ -17,11 +16,10 @@ class Device(PropertiesBase):
                 reply_handler()
 
         def err(e):
-            exception = parse_dbus_error(e)
             if callable(error_handler):
-                error_handler(exception)
+                error_handler(e)
             else:
-                raise exception
+                raise e
 
         self._call('Pair', reply_handler=ok, error_handler=err)
 
@@ -31,11 +29,10 @@ class Device(PropertiesBase):
                 reply_handler()
 
         def err(e):
-            exception = parse_dbus_error(e)
             if callable(error_handler):
-                error_handler(exception)
+                error_handler(e)
             else:
-                raise exception
+                raise e
 
         self._call('Connect', reply_handler=ok, error_handler=err)
 
@@ -45,10 +42,9 @@ class Device(PropertiesBase):
                 reply_handler()
 
         def err(e):
-            exception = parse_dbus_error(e)
             if callable(error_handler):
-                error_handler(exception)
+                error_handler(e)
             else:
-                raise exception
+                raise e
 
         self._call('Disconnect', reply_handler=ok, error_handler=err)

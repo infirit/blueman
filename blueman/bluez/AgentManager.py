@@ -13,9 +13,9 @@ class AgentManager(Base):
 
     def register_agent(self, agent, capability='', default=False):
         path = agent.get_object_path()
-        self._call('RegisterAgent', path, capability)
+        self._call('RegisterAgent', 'os', path, capability)
         if default:
-            self._call('RequestDefaultAgent', path)
+            self._call('RequestDefaultAgent', 'o', path)
 
     def unregister_agent(self, agent):
-        self._call('UnregisterAgent', agent.get_object_path())
+        self._call('UnregisterAgent', 'o', agent.get_object_path())
