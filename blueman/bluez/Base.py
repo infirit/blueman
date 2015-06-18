@@ -72,3 +72,8 @@ class Base(GObject):
     @property
     def _dbus_proxy(self):
         return self.__dbus_proxy
+
+    @classmethod
+    def watch_name_owner(cls, appeared_handler, vanished_handler):
+        Gio.bus_watch_name(Gio.BusType.SYSTEM, cls.__bus_name, Gio.BusNameWatcherFlags.AUTO_START,
+                           appeared_handler, vanished_handler)
