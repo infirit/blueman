@@ -28,6 +28,10 @@ gsettings_SCHEMAS = org.blueman.gschema.xml
 # include the appropriate makefile rules for schema handling
 @GSETTINGS_RULES@
 
+# Install css file
+cssdir = $(datadir)/blueman
+css_DATA = blueman.css
+
 # GTK icon cache
 gtk_update_icon_cache = gtk-update-icon-cache -f -t $(datadir)/icons/hicolor
 
@@ -45,6 +49,7 @@ update-icon-cache:
 
 EXTRA_DIST = 	$(autostart_in_files)	\
 		$(app_in_files)		\
+		$(css_DATA)		\
 		$(thunar_in_files)	\
 		$(settings_in_files)	\
 		$(gsettings_SCHEMAS)

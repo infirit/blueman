@@ -1,0 +1,16 @@
+
+
+#ManagerDeviceList GtkTreeView:selected {
+  color: red;
+  background: green;
+}
+
+#ManagerDeviceList GtkTreeView:prelight {
+background: green;
+}
+
+GtkButton:hover {
+transition: 400ms linear;
+color: red;
+background: yellow;
+}

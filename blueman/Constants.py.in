@@ -14,6 +14,7 @@ UI_PATH = "@pkgdatadir@/ui"
 OBEX_BROWSE_AVAILABLE = True
 DHCP_CONFIG_FILE = "@dhconfig@"
 POLKIT = "@have_polkit@" == "yes"
+CSS_FILE = "@datadir@/blueman/blueman.css"
 
 import os
 import gettext
