@@ -60,7 +60,8 @@ class BluemanAdapters:
             self.manager.connect_signal('adapter-added', self.on_adapter_added)
             adapters = self.manager.list_adapters()
             for adapter in adapters:
-                self.add_to_notebook(adapter)
+                path = adapter.get_object_path()
+                self.on_adapter_added(self.manager, path)
         except Exception as e:
             print(e)
             self.manager = None
@@ -83,13 +84,8 @@ class BluemanAdapters:
         Gtk.main_quit()
 
     def on_adapter_added(self, _manager, adapter_path):
-        def on_property_changed(_adapter, name, value, _path):
-            if name == 'Powered' and value:
-                adapter.disconnect_signal(sig)
-                self.add_to_notebook(adapter)
-
         adapter = Bluez.Adapter(adapter_path)
-        sig = adapter.connect_signal('property-changed', on_property_changed)
+        self.add_to_notebook(adapter)
 
     def on_dbus_name_owner_change(self, owner):
         print('org.bluez owner changed to '+owner)
