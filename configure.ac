@@ -205,6 +205,7 @@ blueman/bluez/Makefile
 blueman/bluez/obex/Makefile
 blueman/gui/Makefile
 blueman/gui/applet/Makefile
+blueman/gui/dialogs/Makefile
 blueman/gui/manager/Makefile
 blueman/plugins/Makefile
 blueman/plugins/services/Makefile

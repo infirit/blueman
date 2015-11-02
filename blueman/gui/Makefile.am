@@ -1,5 +1,6 @@
 SUBDIRS = 	\
 	applet	\
+	dialogs \
 	manager
 
 bluemandir = $(pythondir)/blueman/gui
