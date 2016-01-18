@@ -11,7 +11,7 @@ class NetworkServer(PropertiesBase):
         super(NetworkServer, self).__init__('org.bluez.NetworkServer1', obj_path)
 
     def register(self, uuid, bridge):
-        self._call('Register', uuid, bridge)
+        self._call('Register', 'ss', uuid, bridge)
 
     def unregister(self, uuid):
-        self._call('Unregister', uuid)
+        self._call('Unregister', 's', uuid)

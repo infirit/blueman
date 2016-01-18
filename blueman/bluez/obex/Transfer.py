@@ -17,22 +17,21 @@ class Transfer(Base):
 
     def __init__(self, transfer_path):
         super(Transfer, self).__init__('org.freedesktop.DBus.Properties', transfer_path)
-        self._handle_signal(self._on_properties_changed, 'PropertiesChanged')
+
+        self.signals.append(self.__dbus_proxy.connect('g-properties-changed', self._on_properties_changed))
 
     def __getattr__(self, name):
         if name in ('filename', 'name', 'session', 'size'):
             return self._call('Get', 'org.bluez.obex.Transfer1', name.capitalize())
 
-    def _on_properties_changed(self, interface_name, changed_properties, _invalidated_properties):
-        if interface_name != 'org.bluez.obex.Transfer1':
-            return
-
-        for name, value in changed_properties.items():
-            dprint(self.get_object_path(), name, value)
-            if name == 'Transferred':
-                self.emit('progress', value)
-            elif name == 'Status':
-                if value == 'complete':
-                    self.emit('completed')
-                elif value == 'error':
-                    self.emit('error')
+    def _on_properties_changed(self, proxy, changed_properties, invalidated_properties):
+        if proxy.get_interface_name() == 'org.bluez.obex.Transfer1':
+            for name, value in changed_properties.unpack().items():
+                dprint(self.get_object_path(), name, value)
+                if name == 'Transferred':
+                    self.emit('progress', value)
+                elif name == 'Status':
+                    if value == 'complete':
+                        self.emit('completed')
+                    elif value == 'error':
+                        self.emit('error')
