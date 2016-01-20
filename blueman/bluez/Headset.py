@@ -12,7 +12,10 @@ class Headset(PropertiesBase):
 
     def __init__(self, obj_path=None):
         super(Headset, self).__init__('org.bluez.Headset1', obj_path)
-        self._handle_signal(self._on_answer_requested, 'AnswerRequested')
 
-    def _on_answer_requested(self):
-        self.emit('answer-requested')
+        sig = self.__dbus_proxy.connect("g-signal", self._on_signal_recieved)
+        self.__signals.append(sig)
+
+    def _on_signal_recieved(self, proxy, sender_name, signal_name, param):
+        if signal_name == 'AnswerRequested':
+            self.emit('answer-requested')

@@ -19,41 +19,48 @@ class Manager(PropertiesBase):
     }
 
     def __init__(self):
-        super(Manager, self).__init__('org.freedesktop.DBus.ObjectManager', '/')
-        self._handle_signal(self._on_interfaces_added, 'InterfacesAdded')
-        self._handle_signal(self._on_interfaces_removed, 'InterfacesRemoved')
+        super(Manager, self).__init__()
+        self._object_manager = Gio.ObjectManagerClient.new_for_bus_sync(
+            Gio.BusType.SYSTEM, Gio.DBusObjectManagerClientFlags.NONE,
+            self.__bus_name, '/', None, None, None)
 
-    def _on_adapter_added(self, adapter_path):
-        dprint(adapter_path)
-        self.emit('adapter-added', adapter_path)
+        self.object_manager.connect("object-added", self._on_object_added)
+        self.object_manager.connect("object-removed", self._on_object_removed)
 
-    def _on_adapter_removed(self, adapter_path):
-        dprint(adapter_path)
-        self.emit('adapter-removed', adapter_path)
+    def _on_object_added(self, object_manager, dbus_object):
+        device_proxy = dbus_object.get_interface('org.bluez.Device1')
+        adapter_proxy = dbus_object.get_interface('org.bluez.Adapter1')
 
-    def _on_interfaces_added(self, object_path, interfaces):
-        if 'org.bluez.Adapter1' in interfaces:
+        if adapter_proxy:
+            object_path = adapter_proxy.get_object_path()
             dprint(object_path)
             self.emit('adapter-added', object_path)
-        elif 'org.bluez.Device1' in interfaces:
+        elif device_proxy:
+            object_path = device_proxy.get_object_path()
             dprint(object_path)
-            self.emit('device-created', object_path)
+            self.emit('adapter-added', object_path)
 
-    def _on_interfaces_removed(self, object_path, interfaces):
-        if 'org.bluez.Adapter1' in interfaces:
+    def _on_object_removed(self, object_manager, dbus_object):
+        device_proxy = dbus_object.get_interface('org.bluez.Device1')
+        adapter_proxy = dbus_object.get_interface('org.bluez.Adapter1')
+
+        if adapter_proxy:
+            object_path = adapter_proxy.get_object_path()
             dprint(object_path)
             self.emit('adapter-removed', object_path)
-        elif 'org.bluez.Device1' in interfaces:
+        elif device_proxy:
+            object_path = device_proxy.get_object_path()
             dprint(object_path)
             self.emit('device-removed', object_path)
 
-    def list_adapters(self):
-        objects = self._call('GetManagedObjects')
-        adapters = []
-        for path, interfaces in objects.items():
-            if 'org.bluez.Adapter1' in interfaces:
-                adapters.append(path)
-        return [Adapter(adapter) for adapter in adapters]
+    def list_devices(self):
+        paths = []
+        for obj_proxy in self._object_manager.get_objects():
+            proxy = obj_proxy.get_interface('org.bluez.Device1')
+
+            if proxy: paths.append(proxy.get_object_path())
+
+        return [Device(path) for path in paths]
 
     def get_adapter(self, pattern=None):
         adapters = self.list_adapters()

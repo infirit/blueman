@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 from gi.repository import GObject, GLib
 from blueman.Functions import dprint
 from blueman.bluez.Base import Base
+import sys
 
 
 class PropertiesBase(Base):
@@ -14,18 +15,21 @@ class PropertiesBase(Base):
                                   (GObject.TYPE_PYOBJECT, GObject.TYPE_PYOBJECT, GObject.TYPE_PYOBJECT))
     }
 
+    if sys.version_info.major < 3:
+        __variant_map = {str: 's', unicode: 's', int: 'i', bool: 'b'}
+    else
+        __variant_map = {str: 's', int: 'i', bool: 'b'}
+
     def __init__(self, interface, obj_path):
         super(PropertiesBase, self).__init__(interface, obj_path)
 
-        self._handle_signal(self._on_properties_changed, 'PropertiesChanged', 'org.freedesktop.DBus.Properties',
-                            self.get_object_path())
+        sig = self.__dbus_proxy.connect("g-properties-changed", self._on_properties_changed)
+        self.__signals.append(sig)
 
-
-    def _on_properties_changed(self, interface_name, changed_properties, _invalidated_properties, path):
-        if interface_name == self._interface_name:
-            for name, value in changed_properties.items():
-                dprint(path, name, value)
-                self.emit('property-changed', name, value, path)
+    def _on_properties_changed(self, proxy, changed_properties, _invalidated_properties, path):
+        for name, value in changed_properties.unpack().items():
+            path = proxy.get_object_path()
+            self._on_property_changed(name, value, path)
 
     def get(self, name):
         fallback = {'Icon': 'blueman', 'Class': None}
@@ -39,8 +43,8 @@ class PropertiesBase(Base):
         return prop
 
     def set(self, name, value):
-        format = {int: 'i', bool: 'b', str: 's'}[type(value)]
-        self._dbus_proxy.set_cached_property(name, GLib.Variant(format, value))
+        variant = GLib.Variant(self.__variant_map[type(value)], value)
+        self.dbus_proxy.set_cached_property(name, variant)
 
     def get_properties(self):
         property_names = self._dbus_proxy.get_cached_property_names()

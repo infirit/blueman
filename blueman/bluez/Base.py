@@ -54,14 +54,6 @@ class Base(GObject):
             except GLib.Error as e:
                 raise parse_dbus_error(e)
 
-    def _handle_signal(self, handler, signal, interface_name=None, object_path=None, path_keyword=None):
-        def on_signal(_connection, _sender_name, _object_path, _interface_name, _signal_name, parameters, _user_data,
-                      _dunno):
-            handler(*parameters.unpack())
-        self.__signals.append(self.__bus.signal_subscribe(self.__bus_name, interface_name or self.__interface_name,
-                                                          signal, object_path or self.__obj_path, path_keyword,
-                                                          Gio.DBusSignalFlags.NONE, on_signal, None, None))
-
     def get_object_path(self):
         return self.__obj_path
 
