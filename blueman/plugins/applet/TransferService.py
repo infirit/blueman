@@ -26,20 +26,28 @@ class _Agent:
 
         self._agent_path = '/org/blueman/obex_agent'
 
+        self._signals = []
+
         self._agent = obex.Agent(self._agent_path)
-        self._agent.connect('release', self._on_release)
-        self._agent.connect('authorize', self._on_authorize)
-        self._agent.connect('cancel', self._on_cancel)
 
         self._allowed_devices = []
         self._notification = None
         self._pending_transfer = None
         self.transfers = {}
 
-        obex.AgentManager().register_agent(self._agent_path)
+        self._AgentManager = obex.AgentManager()
+        self.register()
 
-    def __del__(self):
-        obex.AgentManager().unregister_agent(self._agent_path)
+    def register(self):
+        self._AgentManager.register_agent(self._agent_path)
+        self._signals.append(self._agent.connect('release', self._on_release))
+        self._signals.append(self._agent.connect('authorize', self._on_authorize))
+        self._signals.append(self._agent.connect('cancel', self._on_cancel))
+
+    def unregister(self):
+        self._AgentManager.unregister_agent(self._agent_path)
+        for sig in self._signals:
+            self._agent.disconnect(sig)
 
     def _on_release(self, _agent):
         raise Exception(self._agent_path + " was released unexpectedly")
@@ -122,6 +130,8 @@ class TransferService(AppletPlugin):
     _agent = None
     _watch = None
 
+    _signals = []
+
     def on_load(self, applet):
         self._config = Config("org.blueman.transfer")
 
@@ -145,9 +155,11 @@ class TransferService(AppletPlugin):
             dlg.destroy()
 
         self._manager = obex.Manager()
-        self._manager.connect("transfer-started", self._on_transfer_started)
-        self._manager.connect("transfer-completed", self._on_transfer_completed)
-        self._manager.connect('session-removed', self._on_session_removed)
+        self._signals.append(self._manager.connect("transfer-started", self._on_transfer_started))
+        self._signals.append(self._manager.connect("transfer-completed", self._on_transfer_completed))
+        self._signals.append(self._manager.connect('session-removed', self._on_session_removed))
+
+        self._agent = _Agent(applet)
 
         self._watch = dbus.SessionBus().watch_name_owner("org.bluez.obex", self._on_obex_owner_changed)
 
@@ -155,18 +167,26 @@ class TransferService(AppletPlugin):
         if self._watch:
             self._watch.cancel()
 
+        for sig in self._signals:
+            self._manager.disconnect(sig)
+
+        self._agent.unregister()
+
         self._agent = None
+        self._manager = None
 
     def on_manager_state_changed(self, state):
-        if not state:
-            self._agent = None
+        if state:
+            self._agent.register()
+        else:
+            self._agent.unregister()
 
     def _on_obex_owner_changed(self, owner):
         dprint("obex owner changed:", owner)
         if owner == "":
-            self._agent = None
+            self._agent.unregister()
         else:
-            self._agent = _Agent(self._applet)
+            self._agent.register()
 
     def _on_transfer_started(self, _manager, transfer_path):
         if transfer_path not in self._agent.transfers:
