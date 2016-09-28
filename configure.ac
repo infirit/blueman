@@ -137,6 +137,18 @@ AM_CONDITIONAL([HAVE_POLKIT], [test "x$have_polkit" = "xyes"])
 
 AC_SUBST([have_polkit])
 
+AC_ARG_ENABLE([caja-sendto],
+  AS_HELP_STRING([--enable-caja-sendto], [Enable caja-sendto plugin build]),
+  [have_nst=$enableval], [have_nst=yes])
+
+if test "x$have_nst" == "xyes"; then
+  PKG_CHECK_MODULES([NST], [gtk+-3.0 gthread-2.0 >= 2.32])
+  AC_SUBST(NST_CFLAGS)
+  AC_SUBST(NST_LIBS)
+fi
+
+AM_CONDITIONAL([HAVE_NST], [test "x$have_nst" = "xyes"])
+
 AC_ARG_ENABLE([thunar-sendto],
   AS_HELP_STRING([--enable-thunar-sendto], [Enable thunar-sendto installation]),
   [have_thunar=$enableval], [have_thunar=yes])
@@ -272,6 +284,7 @@ data/configs/org.blueman.Mechanism.service
 module/_blueman.pyx
 module/Makefile
 po/Makefile.in
+sendto/Makefile
 ])
 
 
@@ -283,6 +296,7 @@ echo Prefix: $prefix
 echo System configuration directory: $sysconfdir
 echo Python version: $PYTHON_VERSION
 echo Policykit-1 Enabled: $have_polkit
+echo Caja sendto plugin enabled: $have_nst
 echo Thunar sendto installation enabled: $have_thunar
 echo Settings menu integration enabled: $have_settings
 echo Dhcpd 3 configuration file: $dhconfig
