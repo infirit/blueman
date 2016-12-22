@@ -50,14 +50,9 @@ class RecentConns(AppletPlugin):
         self.Adapters = {}
         self.items = None
 
-        self.Item = create_menuitem(_("Recent _Connections") + "...",
-                                    "document-open-recent")
-
-        self.Applet.Plugins.Menu.Register(self, self.Item, 52)
-        self.Applet.Plugins.Menu.Register(self, Gtk.SeparatorMenuItem(), 53)
-
-        self.menu = Gtk.Menu()
-        self.Item.set_submenu(self.menu)
+        self.item = self.Applet.Plugins.Menu.add(self, 52, text=_("Recent _Connections") + "...",
+                                                 icon_name="document-open-recent", submenu=self)
+        self.Applet.Plugins.Menu.add(self, 53)
 
         self.deferred = False
 
@@ -85,7 +80,7 @@ class RecentConns(AppletPlugin):
                     self.items is not None and \
                     (len(self.items) > 0)
 
-        self.Item.props.sensitive = sensitive
+        self.item.set_sensitive(sensitive)
 
     def on_power_state_changed(self, manager, state):
         self.change_sensitivity(state)
@@ -95,7 +90,7 @@ class RecentConns(AppletPlugin):
 
     def on_unload(self):
         self.menu.destroy()
-        self.Applet.Plugins.Menu.Unregister(self.menu)
+        self.Applet.Plugins.Menu.unregister(self.menu)
 
         self.items = []
         self.menu.destroy()
@@ -132,12 +127,12 @@ class RecentConns(AppletPlugin):
             try:
                 if not self.Applet.Plugins.PowerManager.GetBluetoothStatus():
                     self.deferred = True
-                    self.Item.props.sensitive = False
+                    self.item.set_sensitive(False)
                     return
             except:
                 pass
 
-            self.Item.props.sensitive = True
+            self.item.set_sensitive(True)
             adapters = self.Applet.Manager.get_adapters()
             self.Adapters = {}
             for adapter in adapters:
@@ -156,7 +151,7 @@ class RecentConns(AppletPlugin):
 
             self.initialize()
         else:
-            self.Item.props.sensitive = False
+            self.item.set_sensitive(False)
             return
 
         self.change_sensitivity(state)
