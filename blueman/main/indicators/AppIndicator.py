@@ -1,0 +1,33 @@
+# coding=utf-8
+from __future__ import print_function
+from __future__ import division
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import gi
+
+gi.require_version('AppIndicator3', '0.1')
+from gi.repository import AppIndicator3
+from blueman.main.indicators.GtkStatusIcon import build_menu
+
+
+class AppIndicator(object):
+    def __init__(self, icon_name):
+        self.indicator = AppIndicator3.Indicator.new('blueman', icon_name,
+                                                     AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+
+    def set_icon(self, icon_name):
+        self.indicator.set_icon(icon_name)
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ATTENTION)
+        self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
+
+    def set_text(self, text):
+        self.indicator.props.icon_desc = text
+
+    def set_visibility(self, visible):
+        status = AppIndicator3.IndicatorStatus.ACTIVE if visible else AppIndicator3.IndicatorStatus.PASSIVE
+        self.indicator.set_status(status)
+
+    def set_menu(self, menu, activate):
+        self.indicator.set_menu(build_menu(menu, activate))
