@@ -7,7 +7,7 @@ from blueman.main.AppletService import AppletService
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk
+from gi.repository import Gtk, Gio
 
 
 class BluemanTray(object):
@@ -17,6 +17,8 @@ class BluemanTray(object):
         logging.basicConfig(level=logging.INFO)
 
         applet = AppletService()
+
+        Gio.bus_watch_name(Gio.BusType.SESSION, 'org.blueman.Applet', Gio.BusNameWatcherFlags.NONE, None, Gtk.main_quit)
 
         indicator_name = applet.GetStatusIconImplementation()
         indicator_name = 'GtkStatusIcon'
