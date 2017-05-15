@@ -30,10 +30,13 @@ class BluemanTray(object):
 
         self.indicator.set_text(applet.GetText())
         self.indicator.set_visibility(applet.GetVisibility())
-        self.indicator.set_menu(applet.GetMenu(), lambda index: applet.ActivateMenuItem('(i)', index))
+        self.indicator.set_menu(applet.GetMenu(), self._activate_menu_item)
 
         # TODO: Replace with GLib main loop
         Gtk.main()
+
+    def _activate_menu_item(self, *indexes):
+        return AppletService().ActivateMenuItem('(ai)', indexes)
 
     def on_signal(self, _applet, sender_name, signal_name, args):
         if signal_name == 'IconNameChanged':
@@ -43,4 +46,4 @@ class BluemanTray(object):
         elif signal_name == 'VisibilityChanged':
             self.indicator.set_visibility(*args)
         elif signal_name == 'MenuChanged':
-            self.indicator.set_menu(*args)
+            self.indicator.set_menu(*args, self._activate_menu_item)

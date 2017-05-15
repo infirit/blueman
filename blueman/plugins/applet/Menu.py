@@ -7,7 +7,8 @@ from operator import attrgetter
 
 
 class MenuItem(object):
-    def __init__(self, menu_plugin, owner, priority, text, markup, icon_name, tooltip, callback, submenu, visible):
+    def __init__(self, menu_plugin, owner, priority, text, markup, icon_name, tooltip, callback, submenu_function,
+                 visible, sensitive):
         self._menu_plugin = menu_plugin
         self._owner = owner
         self._priority = priority
@@ -16,11 +17,12 @@ class MenuItem(object):
         self._icon_name = icon_name
         self._tooltip = tooltip
         self._callback = callback
-        self._submenu = submenu
+        self._submenu_function = submenu_function
         self._visible = visible
-        self._sensitive = True
+        self._sensitive = sensitive
 
-        assert text and icon_name and (callback or submenu) or not any([text, icon_name, tooltip, callback, submenu])
+        assert text and icon_name and (callback or submenu_function) or \
+               not any([text, icon_name, tooltip, callback, submenu_function])
 
     @property
     def owner(self):
@@ -39,11 +41,26 @@ class MenuItem(object):
         return self._visible
 
     def __iter__(self):
-        # TODO: submenu
         for key in ['text', 'markup', 'icon_name', 'tooltip', 'sensitive']:
             value = getattr(self, '_' + key)
             if value is not None:
                 yield key, value
+        submenu = list(self.submenu_items)
+        if submenu:
+            yield 'submenu', [dict(item) for item in submenu]
+
+    @property
+    def submenu_items(self):
+        if not self._submenu_function:
+            return
+        submenu_items = self._submenu_function()
+        if not submenu_items:
+            return
+        for item in submenu_items:
+            assert not set(item.keys()) - {'text', 'markup', 'icon_name', 'tooltip', 'callback', 'sensitive'}
+            yield MenuItem(self._menu_plugin, self._owner, 0, item.get('text'), item.get('markup'),
+                           item.get('icon_name'), item.get('tooltip'), item.get('callback'), None, True,
+                           item.get('sensitive', True))
 
     def set_text(self, text, markup=False):
         self._text = text
@@ -83,9 +100,10 @@ class Menu(AppletPlugin):
     def __sort(self):
         self.__menuitems.sort(key=attrgetter('priority'))
 
-    def add(self, owner, priority, text=None, markup=False, icon_name=None, tooltip=None, callback=None, submenu=None,
-            visible=True):
-        item = MenuItem(self, owner, priority, text, markup, icon_name, tooltip, callback, submenu, visible)
+    def add(self, owner, priority, text=None, markup=False, icon_name=None, tooltip=None, callback=None,
+            submenu_function=None, visible=True, sensitive=True):
+        item = MenuItem(self, owner, priority, text, markup, icon_name, tooltip, callback, submenu_function, visible,
+                        sensitive)
         self.__menuitems.append(item)
         if self.__plugins_loaded:
             self.__sort()
@@ -111,8 +129,16 @@ class Menu(AppletPlugin):
 
     @dbus.service.method('org.blueman.Applet', in_signature='', out_signature='aa{sv}')
     def GetMenu(self):
-        return [dict(item) for item in self.__menuitems if item.visible]
+        items = [dict(item) for item in self.__menuitems if item.visible]
+        for item in items:
+            if 'submenu' in item:
+                item['submenu'] = dbus.Array(item['submenu'], signature="a{sv}")
+        return items
 
-    @dbus.service.method('org.blueman.Applet', in_signature='i', out_signature='')
-    def ActivateMenuItem(self, index):
-        [item for item in self.__menuitems if item.visible][index].callback()
+    @dbus.service.method('org.blueman.Applet', in_signature='ai', out_signature='')
+    def ActivateMenuItem(self, indexes):
+        node = [item for item in self.__menuitems if item.visible][indexes[0]]
+        for index in list(indexes)[1:]:
+            node = [item for item in node.submenu_items if item.visible][index]
+        if node.callback:
+            node.callback()

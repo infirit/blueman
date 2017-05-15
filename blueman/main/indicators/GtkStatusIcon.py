@@ -23,7 +23,7 @@ def build_menu(items, activate):
                 label.set_text_with_mnemonic(item['text'])
             gtk_item.connect('activate', lambda _, idx=index: activate(idx))
             if 'submenu' in item:
-                gtk_item.set_submenu(item['submenu'])
+                gtk_item.set_submenu(build_menu(item['submenu'], lambda subid, idx=index: activate(idx, subid)))
             if 'tooltip' in item:
                 gtk_item.props.tooltip_text = item['tooltip']
             gtk_item.props.sensitive = item['sensitive']
