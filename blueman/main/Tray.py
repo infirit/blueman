@@ -7,7 +7,7 @@ from blueman.main.AppletService import AppletService
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, Gio
+from gi.repository import GLib, Gio
 
 
 class BluemanTray(object):
@@ -18,7 +18,10 @@ class BluemanTray(object):
 
         applet = AppletService()
 
-        Gio.bus_watch_name(Gio.BusType.SESSION, 'org.blueman.Applet', Gio.BusNameWatcherFlags.NONE, None, Gtk.main_quit)
+        main_loop = GLib.MainLoop()
+
+        Gio.bus_watch_name(Gio.BusType.SESSION, 'org.blueman.Applet',
+                           Gio.BusNameWatcherFlags.NONE, None, main_loop.quit)
 
         indicator_name = applet.GetStatusIconImplementation()
         indicator_name = 'GtkStatusIcon'
@@ -32,8 +35,7 @@ class BluemanTray(object):
         self.indicator.set_visibility(applet.GetVisibility())
         self.indicator.set_menu(applet.GetMenu())
 
-        # TODO: Replace with GLib main loop
-        Gtk.main()
+        main_loop.run()
 
     def _activate_menu_item(self, *indexes):
         return AppletService().ActivateMenuItem('(ai)', indexes)
