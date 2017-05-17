@@ -12,7 +12,8 @@ from blueman.main.indicators.GtkStatusIcon import build_menu
 
 
 class AppIndicator(object):
-    def __init__(self, icon_name):
+    def __init__(self, icon_name, on_activate_menu_item, _on_activate_status_icon):
+        self._on_activate = on_activate_menu_item
         self.indicator = AppIndicator3.Indicator.new('blueman', icon_name,
                                                      AppIndicator3.IndicatorCategory.APPLICATION_STATUS)
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
@@ -29,5 +30,5 @@ class AppIndicator(object):
         status = AppIndicator3.IndicatorStatus.ACTIVE if visible else AppIndicator3.IndicatorStatus.PASSIVE
         self.indicator.set_status(status)
 
-    def set_menu(self, menu, activate):
-        self.indicator.set_menu(build_menu(menu, activate))
+    def set_menu(self, menu):
+        self.indicator.set_menu(build_menu(menu, self._on_activate))

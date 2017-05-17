@@ -34,13 +34,13 @@ def build_menu(items, activate):
     return menu
 
 
-class GtkStatusIcon(GObject.GObject):
-    __gsignals__ = {str('activate'): (GObject.SignalFlags.NO_HOOKS, None, (GObject.TYPE_PYOBJECT,))}
-
-    def __init__(self, icon_name):
+class GtkStatusIcon(object):
+    def __init__(self, icon_name, on_activate_menu_item, on_activate_status_icon):
+        self._on_activate = on_activate_menu_item
         self.indicator = Gtk.StatusIcon(icon_name=icon_name)
         self.indicator.set_title('blueman')
         self.indicator.connect('popup-menu', self.on_popup_menu)
+        self.indicator.connect('activate', lambda _status_icon: on_activate_status_icon())
         self._menu = None
 
     def on_popup_menu(self, status_icon, button, activate_time):
@@ -56,5 +56,5 @@ class GtkStatusIcon(GObject.GObject):
     def set_visibility(self, visible):
         self.indicator.props.visible = visible
 
-    def set_menu(self, menu, activate):
-        self._menu = build_menu(menu, activate)
+    def set_menu(self, menu):
+        self._menu = build_menu(menu, self._on_activate)
