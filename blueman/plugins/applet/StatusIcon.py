@@ -138,7 +138,6 @@ class StatusIcon(AppletPlugin, GObject.GObject):
 
         self.Applet.Plugins.RunEx("on_status_icon_query_icon", callback)
         return icon
-        self.QueryVisibility()
 
     def on_query_status_icon_implementation(self):
         return None
