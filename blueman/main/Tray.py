@@ -14,8 +14,6 @@ class BluemanTray(object):
     def __init__(self):
         check_single_instance("blueman-tray")
 
-        logging.basicConfig(level=logging.INFO)
-
         applet = AppletService()
 
         main_loop = GLib.MainLoop()
