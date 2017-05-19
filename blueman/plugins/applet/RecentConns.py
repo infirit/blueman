@@ -50,7 +50,7 @@ class RecentConns(AppletPlugin):
         self.Adapters = {}
         self.__menuitems = []
 
-        self.item = self.Applet.Plugins.Menu.add(self, 52, text=_("Recent _Connections") + "...",
+        self.item = self.Applet.Plugins.Menu.add(self, 52, text=_("Recent _Connections") + "…",
                                                  icon_name="document-open-recent", submenu_function=self.get_menu)
         self.Applet.Plugins.Menu.add(self, 53)
 
