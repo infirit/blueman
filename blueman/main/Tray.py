@@ -21,7 +21,7 @@ class BluemanTray(object):
         main_loop = GLib.MainLoop()
 
         Gio.bus_watch_name(Gio.BusType.SESSION, 'org.blueman.Applet',
-                           Gio.BusNameWatcherFlags.NONE, None, main_loop.quit)
+                           Gio.BusNameWatcherFlags.NONE, None, lambda _connection, _name: main_loop.quit())
 
         indicator_name = applet.GetStatusIconImplementation()
         indicator_name = 'GtkStatusIcon'
