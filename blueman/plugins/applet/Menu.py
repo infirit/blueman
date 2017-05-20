@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import dbus
+import dbus.service
 
 from blueman.plugins.AppletPlugin import AppletPlugin
 from operator import attrgetter
