@@ -24,7 +24,7 @@ class AppIndicator(object):
         self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
 
     def set_text(self, text):
-        self.indicator.props.icon_desc = text
+        self.indicator.props.title = text
 
     def set_visibility(self, visible):
         status = AppIndicator3.IndicatorStatus.ACTIVE if visible else AppIndicator3.IndicatorStatus.PASSIVE
