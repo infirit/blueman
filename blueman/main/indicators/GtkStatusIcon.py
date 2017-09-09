@@ -8,15 +8,15 @@ import gi
 
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, GObject
-from blueman.Functions import create_menuitem, get_icon
+from blueman.Functions import create_menuitem
 
 
 def build_menu(items, activate):
     menu = Gtk.Menu()
     for index, item in enumerate(items):
         if 'text' in item and 'icon_name' in item:
-            gtk_item = create_menuitem(item['text'], get_icon(item['icon_name'], 16))
-            label = gtk_item.get_child().get_children()[1]
+            gtk_item = create_menuitem(item['text'], item['icon_name'])
+            label = gtk_item.get_child()
             if item['markup']:
                 label.set_markup_with_mnemonic(item['text'])
             else:
