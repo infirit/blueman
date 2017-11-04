@@ -13,8 +13,10 @@ from blueman.typing import GSignals
 class StatusIcon(AppletPlugin, GObject.GObject):
     __gsignals__: GSignals = {str('activate'): (GObject.SignalFlags.NO_HOOKS, None, ())}
 
+    __author__ = "Walmis"
     __unloadable__ = False
     __icon__ = "blueman-tray"
+    __description__ = _("Add icon with menu to system tray.")
     __depends__ = ['Menu']
 
     FORCE_SHOW = 2
