@@ -1,6 +1,7 @@
 # coding=utf-8
 import logging
 from gettext import gettext as _, bind_textdomain_codeset
+from typing import Optional
 
 from blueman.bluez.Manager import Manager
 from blueman.bluez.errors import DBusNoSuchAdapterError
@@ -25,20 +26,49 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
-class Blueman(Gtk.Window):
+class BluemanWindow(Gtk.ApplicationWindow):
+    def __init__(self, app):
+        super().__init__(
+            application=app,
+            name="BluemanManager",
+            icon_name="blueman",
+            title="Bluetooth Devices",
+            visible=True
+        )
+
+
+class Blueman(Gtk.Application):
     def __init__(self):
-        super().__init__(title=_("Bluetooth Devices"))
+        super().__init__(application_id="org.blueman.Manager")
 
         self.Config = Config("org.blueman.general")
+        self.window: Optional[BluemanWindow] = None
 
-        self.Builder = Gtk.Builder()
-        self.Builder.set_translation_domain("blueman")
+    def do_activate(self):
+        if not self.window:
+            self.window = BluemanWindow(self)
+            w, h, x, y = self.Config["window-properties"]
+            if w and h:
+                self.window.resize(w, h)
+            if x and y:
+                self.window.move(x, y)
+
+            # Connect to configure event to store new window position and size
+            self.window.connect("configure-event", self._on_configure)
+        else:
+            self.window.present_with_time(Gtk.get_current_event_time())
+            return
+
+        self.Builder = Gtk.Builder(translation_domain="blueman")
+
         bind_textdomain_codeset("blueman", "UTF-8")
         self.Builder.add_from_file(UI_PATH + "/manager-main.ui")
 
         grid = self.Builder.get_object("grid")
-        self.add(grid)
-        self.set_name("BluemanManager")
+        self.window.add(grid)
+
+        toolbar = self.Builder.get_object("toolbar")
+        statusbar = self.Builder.get_object("statusbar")
 
         self.Plugins = PluginManager(ManagerPlugin, blueman.plugins.manager, self)
         self.Plugins.load_plugin()
@@ -47,28 +77,15 @@ class Blueman(Gtk.Window):
         grid.attach(area, 0, 3, 1, 1)
 
         # Add margin for resize grip or it will overlap
-        if self.get_has_resize_grip():
-            statusbar = self.Builder.get_object("statusbar")
+        if self.window.get_has_resize_grip():
             margin_right = statusbar.get_margin_right()
             statusbar.set_margin_right(margin_right + 10)
-
-        def do_present(time):
-            if self.props.visible:
-                self.present_with_time(time)
-
-        check_single_instance("blueman-manager", do_present)
-
-        def on_window_delete(window, event):
-            w, h = self.get_size()
-            x, y = self.get_position()
-            self.Config["window-properties"] = [w, h, x, y]
-            Gtk.main_quit()
 
         def bt_status_changed(status):
             if not status:
                 self.hide()
                 check_bluetooth_status(_("Bluetooth needs to be turned on for the device manager to function"),
-                                       lambda: Gtk.main_quit())
+                                       self.quit)
             else:
                 self.show()
 
@@ -93,7 +110,7 @@ class Blueman(Gtk.Window):
             d.destroy()
 
             # FIXME ui can handle BlueZ start/stop but we should inform user
-            Gtk.main_quit()
+            self.quit()
 
         def on_dbus_name_appeared(_connection, name, owner):
             logging.info("%s %s" % (name, owner))
@@ -103,10 +120,10 @@ class Blueman(Gtk.Window):
                 self.Applet = AppletService()
             except DBusProxyFailed:
                 print("Blueman applet needs to be running")
-                exit()
+                self.quit()
 
             check_bluetooth_status(_("Bluetooth needs to be turned on for the device manager to function"),
-                                   lambda: Gtk.main_quit())
+                                   self.quit)
 
             manager = Manager()
             try:
@@ -120,15 +137,6 @@ class Blueman(Gtk.Window):
                     exit(1)
 
             self.Applet.connect('g-signal', on_applet_signal)
-
-            self.connect("delete-event", on_window_delete)
-            self.props.icon_name = "blueman"
-
-            w, h, x, y = self.Config["window-properties"]
-            if w and h:
-                self.resize(w, h)
-            if x and y:
-                self.move(x, y)
 
             sw = self.Builder.get_object("scrollview")
             # Disable overlay scrolling
@@ -149,15 +157,18 @@ class Blueman(Gtk.Window):
 
             self.List.connect("adapter-changed", self.on_adapter_changed)
 
-            toolbar = self.Builder.get_object("toolbar")
-            statusbar = self.Builder.get_object("statusbar")
-
             self.Config.bind_to_widget("show-toolbar", toolbar, "visible")
             self.Config.bind_to_widget("show-statusbar", statusbar, "visible")
 
-            self.show()
-
         Manager.watch_name_owner(on_dbus_name_appeared, on_dbus_name_vanished)
+
+        self.window.present_with_time(Gtk.get_current_event_time())
+
+    def _on_configure(self, window, event):
+        width, height, x, y = self.Config["window-properties"]
+        if event.x != x or event.y != y or event.width != width or event.height != height:
+            self.Config["window-properties"] = [event.width, event.height, event.x, event.y]
+        return False
 
     def on_adapter_changed(self, lst, adapter):
         if adapter is not None:
