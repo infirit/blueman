@@ -5,6 +5,8 @@ import os
 import signal
 import logging
 
+print('Test gpg signing')
+
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
