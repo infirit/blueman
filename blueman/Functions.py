@@ -256,49 +256,25 @@ def is_running(name, pid):
         return name in f.readline().replace("\0", " ")
 
 
-def check_single_instance(name, unhide_func=None):
+def check_single_instance(name):
     print("%s version %s starting" % (name, VERSION))
     lockfile = get_lockfile(name)
-
-    def handler(signum, frame):
-        if unhide_func:
-            try:
-                with open(lockfile, "r") as f:
-                    f.readline()
-                    event_time = int(f.readline())
-            except ValueError:
-                event_time = 0
-
-            unhide_func(event_time)
-
-    signal.signal(signal.SIGUSR1, handler)
 
     if os.path.exists(lockfile):
         pid = get_pid(lockfile)
         if pid:
-            if not is_running(name, pid):
-                print("Stale PID, overwriting")
-                os.remove(lockfile)
-            else:
+            if is_running(name, pid):
                 print("There is an instance already running")
-                time = os.getenv("BLUEMAN_EVENT_TIME") or 0
-
-                with open(lockfile, "w") as f:
-                    f.write("%s\n%s" % (str(pid), str(time)))
-
-                os.kill(pid, signal.SIGUSR1)
                 exit()
-        else:
-            os.remove(lockfile)
-
-    try:
-        fd = os.open(lockfile, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o664)
-        pid_str = "%s\n%s" % (str(os.getpid()), "0")
-        os.write(fd, pid_str.encode("UTF-8"))
-        os.close(fd)
-    except OSError:
-        print("There is an instance already running")
-        exit()
+            else:
+                print("Stale PID, overwriting")
+    else:
+        try:
+            with open(lockfile, 'w') as f:
+                f.write(str(os.getpid()))
+        except OSError:
+            print("Warning could not write pid file!")
+            exit()
 
     atexit.register(lambda: os.remove(lockfile))
 

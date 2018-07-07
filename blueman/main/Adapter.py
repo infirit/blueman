@@ -44,7 +44,7 @@ class BluemanAdapters(Gtk.Dialog):
         setup_icon_path()
         bluez.Manager.watch_name_owner(self._on_dbus_name_appeared, self._on_dbus_name_vanished)
 
-        check_single_instance("blueman-adapters", lambda time: self.present_with_time(time))
+        check_single_instance("blueman-adapters")
 
         check_bluetooth_status(_("Bluetooth needs to be turned on for the adapter manager to work"), lambda: exit())
 

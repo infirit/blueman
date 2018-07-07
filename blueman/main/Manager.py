@@ -53,11 +53,7 @@ class Blueman(Gtk.Window):
             margin_right = statusbar.get_margin_right()
             statusbar.set_margin_right(margin_right + 10)
 
-        def do_present(time):
-            if self.props.visible:
-                self.present_with_time(time)
-
-        check_single_instance("blueman-manager", do_present)
+        check_single_instance("blueman-manager")
 
         def on_window_delete(window, event):
             w, h = self.get_size()

@@ -47,7 +47,7 @@ class BluemanServices(Gtk.Dialog):
 
         self.Config = Config("org.blueman.general")
 
-        check_single_instance("blueman-services", lambda time: self.Dialog.present_with_time(time))
+        check_single_instance("blueman-services")
 
         data = [
             {"id": "icon_name", "type": str, "renderer": Gtk.CellRendererPixbuf(stock_size=Gtk.IconSize.DND),
