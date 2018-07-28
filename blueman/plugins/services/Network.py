@@ -21,8 +21,10 @@ from gi.repository import Gio, Gtk
 
 class Network(ServicePlugin):
     __plugin_info__ = (_("Network"), "network-workgroup")
+    Config = None
 
     def on_load(self, container):
+        self.Config = Config("org.blueman.network")
 
         self.Builder = Gtk.Builder()
         self.Builder.set_translation_domain("blueman")
@@ -75,6 +77,8 @@ class Network(ServicePlugin):
 
                     if not self.Config["nap-enable"]:
                         self.Config["nap-enable"] = True
+                    self.Config['ipaddress'] = net_ip.props.text
+                    self.Config['dhcphandler'] = stype
                 except Exception as e:
                     d = ErrorDialog("<b>Failed to apply network settings</b>",
                                     excp=e, parent=self.widget.get_toplevel())
@@ -130,8 +134,6 @@ class Network(ServicePlugin):
         return True
 
     def setup_network(self):
-        self.Config = Config("org.blueman.network")
-
         nap_enable = self.Builder.get_object("nap-enable")
         r_dnsmasq = self.Builder.get_object("r_dnsmasq")
         r_dhcpd = self.Builder.get_object("r_dhcpd")
