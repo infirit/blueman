@@ -5,6 +5,7 @@ from blueman.main.DBusProxies import Mechanism
 
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.gui.CommonUi import ErrorDialog
+from gi.repository import GLib
 import logging
 
 
@@ -48,6 +49,21 @@ class Networking(AppletPlugin):
 
         self._mechanism.ReloadNetwork(result_handler=reply, error_handler=err)
 
+    def enable_network(self):
+        try:
+            self._mechanism.EnableNetwork('(sss)', self.Config['ipaddress'], '255.255.255.0',
+                                          self.Config['dhcphandler'])
+        except GLib.Error as e:
+            # It will error on applet startup anyway so lets make sure to disable
+            self.disable_network()
+            self.show_error_dialog(e)
+
+    def disable_network(self):
+        try:
+            self._mechanism.DisableNetwork()
+        except GLib.Error as e:
+            self.show_error_dialog(e)
+
     def on_adapter_added(self, path):
         self.update_status()
 
@@ -60,8 +76,8 @@ class Networking(AppletPlugin):
         self.reload_network()
 
     def on_config_changed(self, config, key):
-        if key == "nap-enable":
-            self.set_nap(config[key])
+        if key in ('nap-enable', 'ipaddress', 'dhcphandler'):
+            self.set_nap(config['nap-enable'])
 
     def show_error_dialog(self, excp):
         def run_dialog(dialog):
@@ -89,3 +105,8 @@ class Networking(AppletPlugin):
                 elif not enable and registered:
                     s.unregister("nap")
                     self._registered[object_path] = False
+
+            if enable:
+                self.enable_network()
+            else:
+                self.disable_network()
