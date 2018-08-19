@@ -39,20 +39,12 @@ class Networking(AppletPlugin):
         if state:
             self.update_status()
 
-    def load_nap_settings(self):
-        logging.info("Loading NAP settings")
-
+    def reload_network(self):
         def reply(*_):
             pass
 
         def err(_obj, result, _user_data):
-            d = ErrorDialog("<b>Failed to apply network settings</b>",
-                            "You might not be able to connect to the Bluetooth network via this machine",
-                            result,
-                            margin_left=9)
-
-            d.run()
-            d.destroy()
+            self.show_error_dialog(result)
 
         self._mechanism.ReloadNetwork(result_handler=reply, error_handler=err)
 
@@ -62,12 +54,27 @@ class Networking(AppletPlugin):
     def update_status(self):
         self.set_nap(self.Config["nap-enable"])
 
+    def load_nap_settings(self):
+        logging.info("Loading NAP settings")
+
+        self.reload_network()
+
     def on_config_changed(self, config, key):
         if key == "nap-enable":
             self.set_nap(config[key])
 
-    def set_nap(self, on):
-        logging.info("set nap %s" % on)
+    def show_error_dialog(self, excp):
+        def run_dialog(dialog):
+            dialog.run()
+            dialog.destroy()
+
+        d = ErrorDialog('<b>Failed to apply network settings</b>',
+                        'You might not be able to connect to the Bluetooth network via this machine',
+                        excp, margin_left=9)
+        GLib.idle_add(run_dialog, d)
+
+    def set_nap(self, enable):
+        logging.info("set nap %s" % enable)
         if self.parent.manager_state:
             adapters = self.parent.Manager.get_adapters()
             for adapter in adapters:
@@ -76,9 +83,9 @@ class Networking(AppletPlugin):
                 registered = self._registered.setdefault(object_path, False)
 
                 s = NetworkServer(object_path)
-                if on and not registered:
+                if enable and not registered:
                     s.register("nap", "pan1")
                     self._registered[object_path] = True
-                elif not on and registered:
+                elif not enable and registered:
                     s.unregister("nap")
                     self._registered[object_path] = False
