@@ -32,10 +32,13 @@ class ProxyBase(Gio.DBusProxy, metaclass=ProxyBaseMeta):
             *args, **kwargs
         )
 
-        try:
-            self.init()
-        except GLib.Error as e:
-            raise DBusProxyFailed(e.message)
+        def finish(proxy, res):
+            try:
+                proxy.finish(res)
+            except GLib.Error as e:
+                raise DBusProxyFailed(e.message)
+
+        self.init_async(GLib.PRIORITY_DEFAULT, None, finish)
 
 
 class Mechanism(ProxyBase):
