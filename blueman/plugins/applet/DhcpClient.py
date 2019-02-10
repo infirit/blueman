@@ -1,10 +1,24 @@
 # coding=utf-8
-import dbus.service
 import logging
 from blueman.bluez.Network import AnyNetwork
 from blueman.gui.Notification import Notification
+from blueman.main.DbusService import *
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.main.DBusProxies import Mechanism
+from gi.repository import Gio
+
+
+DBUS_INTERFACE = 'org.blueman.Applet.DhcpClient'
+
+
+class AppletDhcpClientService(DbusService):
+    def __init__(self, plugin, **kwargs):
+        super().__init__(path='/org/blueman/Applet', **kwargs)
+        self.plugin = plugin
+
+    @dbus_method(interface=DBUS_INTERFACE, in_signature='s')
+    def DhcpClient(self, interface):
+        self.plugin.dhcp_acquire(interface)
 
 
 class DhcpClient(AppletPlugin):
@@ -13,6 +27,8 @@ class DhcpClient(AppletPlugin):
     __author__ = "Walmis"
 
     _any_network = None
+    _connection = None
+    _dbus_service = None
 
     def on_load(self):
         self._any_network = AnyNetwork()
@@ -20,12 +36,13 @@ class DhcpClient(AppletPlugin):
 
         self.quering = []
 
-    def on_unload(self):
-        del self._any_network
+        self._connection = Gio.bus_get_sync(Gio.BusType.SESSION)
+        self._dbus_service = AppletDhcpClientService(self, connection=self._connection)
+        self._dbus_service.connect_bus()
 
-    @dbus.service.method('org.blueman.Applet', in_signature="s")
-    def DhcpClient(self, interface):
-        self.dhcp_acquire(interface)
+    def on_unload(self):
+        self._dbus_service.disconnect_bus()
+        self._dbus_service = None
 
     def _on_network_prop_changed(self, _network, key, value, _path):
         if key == "Interface":

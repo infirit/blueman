@@ -3,7 +3,6 @@ from blueman.Functions import *
 import blueman.bluez as bluez
 import blueman.plugins.applet
 from blueman.main.PluginManager import PersistentPluginManager
-from blueman.main.DbusService import DbusService
 from blueman.plugins.AppletPlugin import AppletPlugin
 import logging
 
@@ -26,8 +25,6 @@ class BluemanApplet(object):
         self.Manager.connect_signal('adapter-removed', self.on_adapter_removed)
         self.Manager.connect_signal('device-created', self.on_device_created)
         self.Manager.connect_signal('device-removed', self.on_device_removed)
-
-        self.DbusSvc = DbusService("org.blueman.Applet", "/")
 
         self.Plugins = PersistentPluginManager(AppletPlugin, blueman.plugins.applet, self)
         self.Plugins.load_plugin()

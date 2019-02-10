@@ -1,15 +1,68 @@
 # coding=utf-8
-
-import dbus.service
-from gi.repository import GObject, GLib
+from gi.repository import GObject
+from gi.repository import GLib
+from gi.repository import Gio
 
 from blueman.Functions import launch, kill, get_pid, get_lockfile
+from blueman.main.DbusService import *
 from blueman.main.PluginManager import StopException
 from blueman.plugins.AppletPlugin import AppletPlugin
 
 
+DBUS_INTERFACE = 'org.blueman.Applet.StatusIcon'
+
+
+class AppletStatusIconService(DbusService):
+    def __init__(self, plugin, **kwargs):
+        super().__init__(path='/org/blueman/Applet', **kwargs)
+        self.plugin = plugin
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='b')
+    def GetVisibility(self):
+        return self.plugin.visible
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='b')
+    def VisibilityChanged(self, visible):
+        pass
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='s')
+    def TextChanged(self, text):
+        pass
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='s')
+    def GetText(self):
+        return '\n'.join([self.plugin.lines[key] for key in sorted(self.plugin.lines)])
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='s')
+    def IconNameChanged(self, icon_name):
+        pass
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature="s")
+    def GetStatusIconImplementation(self):
+        implementations = self.plugin.parent.Plugins.run("on_query_status_icon_implementation")
+        return next((implementation for implementation in implementations if implementation), 'GtkStatusIcon')
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='s')
+    def GetIconName(self):
+        icon = "blueman-tray"
+
+        def callback(inst, ret):
+            if ret is not None:
+                for i in ret:
+                    nonlocal icon
+                    icon = i
+                    raise StopException
+
+        self.plugin.parent.Plugins.run_ex("on_status_icon_query_icon", callback)
+        return icon
+
+    @dbus_method(interface=DBUS_INTERFACE)
+    def Activate(self):
+        self.plugin.emit('activate')
+
+
 class StatusIcon(AppletPlugin, GObject.GObject):
-    __gsignals__ = {str('activate'): (GObject.SignalFlags.NO_HOOKS, None, ())}
+    __gsignals__ = {'activate': (GObject.SignalFlags.NO_HOOKS, None, ())}
 
     __unloadable__ = False
     __icon__ = "blueman-tray"
@@ -25,6 +78,9 @@ class StatusIcon(AppletPlugin, GObject.GObject):
 
     _implementation = None
 
+    _connection = None
+    _dbus_service = None
+
     def on_load(self):
         GObject.GObject.__init__(self)
         self.lines = {0: _("Bluetooth Enabled")}
@@ -37,6 +93,14 @@ class StatusIcon(AppletPlugin, GObject.GObject):
 
         self.parent.Plugins.connect('plugin-loaded', self._on_plugins_changed)
         self.parent.Plugins.connect('plugin-unloaded', self._on_plugins_changed)
+
+        self._connection = Gio.bus_get_sync(Gio.BusType.SESSION)
+        self._dbus_service = AppletStatusIconService(self, connection=self._connection)
+        self._dbus_service.connect_bus()
+
+    def on_unload(self):
+        self._dbus_service.disconnect_bus()
+        self._dbus_service = None
 
     def on_power_state_changed(self, _manager, state):
         if state:
@@ -71,18 +135,10 @@ class StatusIcon(AppletPlugin, GObject.GObject):
         self.visibility_timeout = None
         self.query_visibility()
 
-    @dbus.service.method('org.blueman.Applet', in_signature="", out_signature="b")
-    def GetVisibility(self):
-        return self.visible
-
     def set_visible(self, visible, emit):
         self.visible = visible
         if emit:
-            self.VisibilityChanged(visible)
-
-    @dbus.service.signal('org.blueman.Applet', signature='b')
-    def VisibilityChanged(self, visible):
-        pass
+            self._dbus_service.VisibilityChanged(visible)
 
     def set_text_line(self, lineid, text):
         if text:
@@ -90,23 +146,11 @@ class StatusIcon(AppletPlugin, GObject.GObject):
         else:
             self.lines.pop(lineid, None)
 
-        self.TextChanged(self.GetText())
-
-    @dbus.service.signal('org.blueman.Applet', signature='s')
-    def TextChanged(self, text):
-        pass
-
-    @dbus.service.method('org.blueman.Applet', in_signature="", out_signature="s")
-    def GetText(self):
-        return '\n'.join([self.lines[key] for key in sorted(self.lines)])
+        self._dbus_service.TextChanged(self._dbus_service.GetText())
 
     def icon_should_change(self):
-        self.IconNameChanged(self.GetIconName())
+        self._dbus_service.IconNameChanged(self._dbus_service.GetIconName())
         self.query_visibility()
-
-    @dbus.service.signal('org.blueman.Applet', signature='s')
-    def IconNameChanged(self, icon_name):
-        pass
 
     def on_adapter_added(self, path):
         self.query_visibility()
@@ -118,30 +162,11 @@ class StatusIcon(AppletPlugin, GObject.GObject):
         self.query_visibility()
 
     def _on_plugins_changed(self, _plugins, _name):
-        implementation = self.GetStatusIconImplementation()
+        implementation = self._dbus_service.GetStatusIconImplementation()
         if not self._implementation or self._implementation != implementation:
             self._implementation = implementation
             kill(get_pid(get_lockfile('blueman-tray')), 'blueman-tray')
             launch('blueman-tray', icon_name='blueman', sn=False)
-
-    @dbus.service.method('org.blueman.Applet', in_signature="", out_signature="s")
-    def GetStatusIconImplementation(self):
-        implementations = self.parent.Plugins.run("on_query_status_icon_implementation")
-        return next((implementation for implementation in implementations if implementation), 'GtkStatusIcon')
-
-    @dbus.service.method('org.blueman.Applet', in_signature="", out_signature="s")
-    def GetIconName(self):
-        icon = "blueman-tray"
-
-        def callback(inst, ret):
-            if ret is not None:
-                for i in ret:
-                    nonlocal icon
-                    icon = i
-                    raise StopException
-
-        self.parent.Plugins.run_ex("on_status_icon_query_icon", callback)
-        return icon
 
     def on_query_status_icon_implementation(self):
         return None
@@ -151,7 +176,3 @@ class StatusIcon(AppletPlugin, GObject.GObject):
 
     def on_status_icon_query_icon(self):
         return None
-
-    @dbus.service.method('org.blueman.Applet', in_signature="")
-    def Activate(self):
-        self.emit('activate')

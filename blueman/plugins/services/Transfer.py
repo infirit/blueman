@@ -26,7 +26,7 @@ class Transfer(ServicePlugin):
         self.ignored_keys = []
 
         container.pack_start(self.widget, True, True, 0)
-        a = AppletService()
+        a = AppletService(interface_name='org.blueman.Applet')
         if "TransferService" in a.QueryPlugins():
             self._setup_transfer()
         else:

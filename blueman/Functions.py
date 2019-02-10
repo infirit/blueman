@@ -59,7 +59,7 @@ __all__ = ["check_bluetooth_status", "launch", "setup_icon_path", "get_icon",
 
 def check_bluetooth_status(message, exitfunc, *args, **kwargs):
     try:
-        applet = AppletService()
+        applet = AppletService(interface_name='org.blueman.Applet')
     except DBusProxyFailed as e:
         logging.exception(e)
         print("Blueman applet needs to be running")

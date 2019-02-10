@@ -312,7 +312,7 @@ class Dialog:
                 return
 
 
-class NetUsage(AppletPlugin, GObject.GObject):
+class NetUsage(AppletPlugin):
     __depends__ = ["Menu"]
     __icon__ = "network-wireless"
     __description__ = _("Allows you to monitor your (mobile broadband) network traffic usage. Useful for limited "
@@ -330,7 +330,6 @@ class NetUsage(AppletPlugin, GObject.GObject):
     _any_network = None
 
     def on_load(self):
-        GObject.GObject.__init__(self)
         self.monitors = []
         self.devices = weakref.WeakValueDictionary()
 

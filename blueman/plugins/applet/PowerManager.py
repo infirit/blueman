@@ -1,13 +1,13 @@
 # coding=utf-8
-import dbus.service
 import logging
+from blueman.main.DBusServiceObject import *
 from blueman.plugins.AppletPlugin import AppletPlugin
 import blueman.bluez as bluez
 
 from gi.repository import GLib
 
 
-class PowerManager(AppletPlugin):
+class PowerManager(AppletPlugin, DBusServiceObject):
     __depends__ = ["StatusIcon", "Menu"]
     __unloadable__ = True
     __description__ = _("Controls Bluetooth adapter power states")
@@ -175,15 +175,15 @@ class PowerManager(AppletPlugin):
             self.parent.Plugins.run("on_power_state_changed", self, new_state)
             self.parent.Plugins.StatusIcon.icon_should_change()
 
-    @dbus.service.signal('org.blueman.Applet', signature="b")
+    @dbus_signal('org.blueman.Applet', signature='b')
     def BluetoothStatusChanged(self, status):
         pass
 
-    @dbus.service.method('org.blueman.Applet', in_signature="b", out_signature="")
+    @dbus_method('org.blueman.Applet', in_signature='b')
     def SetBluetoothStatus(self, status):
         self.request_power_state(status)
 
-    @dbus.service.method('org.blueman.Applet', in_signature="", out_signature="b")
+    @dbus_method('org.blueman.Applet', out_signature='b')
     def get_bluetooth_status(self):
         return self.current_state
 

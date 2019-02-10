@@ -1,56 +1,28 @@
 # coding=utf-8
-from dbus.mainloop.glib import DBusGMainLoop
-import dbus.service
-
-DBusGMainLoop(set_as_default=True)
-
-
-class MethodAlreadyExists(Exception):
-    pass
+from blueman.main.DBusServiceObject import *
+from gi.repository import Gio
+import logging
 
 
-class DbusService(dbus.service.Object):
-    def __init__(self, name, path, bus=dbus.SessionBus):
-        self.bus = bus()
-        self.bus.request_name(name)
+__all__ = ['dbus_method', 'DBusPropery', 'dbus_signal', 'DbusService']
 
-        super(DbusService, self).__init__(self.bus, path)
 
-    def add_definitions(self, instance):
-        setattr(instance, 'locations', list(self.locations))
-
-        for name, func in self._definitions(instance):
-            if name in self.__class__.__dict__:
-                raise MethodAlreadyExists
-
-            self._add_wrapper(getattr(instance, name))
-
-        self.__class__._refresh_dbus_registration()
-
-    def _add_wrapper(self, method):
-        def wrapper(*args, **kwargs):
-            return method(*args[1:], **kwargs)
-
-        wrapper.__name__ = method.__name__
-
-        for key, value in method.__dict__.items():
-            if key.startswith('_dbus_'):
-                setattr(wrapper, key, value)
-
-        setattr(self.__class__, method.__name__, wrapper)
-
-    def remove_definitions(self, obj):
-        for name, func in self._definitions(obj):
-            delattr(self.__class__, name)
-
-        self.__class__._refresh_dbus_registration()
-
-    @classmethod
-    def _refresh_dbus_registration(cls):
-        cls.__class__.__init__(cls, cls.__name__, cls.__bases__, cls.__dict__)
+class DbusService(DBusServiceObject):
+    def __init__(self, bus_name='org.blueman.Applet', path='/', **kwargs):
+        super().__init__(object_path=path, **kwargs)
+        self.__bus_name = bus_name
+        self._bus_id = None
 
     @staticmethod
-    def _definitions(obj):
-        for name, func in obj.__class__.__dict__.items():
-            if getattr(func, '_dbus_is_method', False) or getattr(func, '_dbus_is_signal', False):
-                yield name, func
+    def _on_name_acquired(conn, name):
+        logging.debug('Got bus name: %s' % name)
+
+    def connect_bus(self):
+        self._bus_id = Gio.bus_own_name_on_connection(self.connection, self.__bus_name, Gio.BusNameOwnerFlags.NONE,
+                                                      self._on_name_acquired, None)
+
+    def disconnect_bus(self):
+        if self._bus_id:
+            Gio.bus_unown_name(self._bus_id)
+        self._bus_id = None
+        self.set_property('connection', None)

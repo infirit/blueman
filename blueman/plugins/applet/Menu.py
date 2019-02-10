@@ -1,10 +1,9 @@
 # coding=utf-8
-
-import dbus
-import dbus.service
-
+from blueman.main.DbusService import *
 from blueman.plugins.AppletPlugin import AppletPlugin
 from operator import attrgetter
+from gi.repository import GLib
+from gi.repository import Gio
 
 
 class MenuItem(object):
@@ -85,34 +84,94 @@ class MenuItem(object):
         self._menu_plugin.on_menu_changed()
 
 
+DBUS_INTERFACE = 'org.blueman.Applet.Menu'
+
+
+class AppletMenuService(DbusService):
+    def __init__(self, plugin, **kwargs):
+        super().__init__(path='/org/blueman/Applet', **kwargs)
+        self.plugin = plugin
+
+    @dbus_signal(interface=DBUS_INTERFACE, signature='aa{sv}')
+    def MenuChanged(self, menu):
+        pass
+
+    @dbus_method(interface=DBUS_INTERFACE, out_signature='aa{sv}')
+    def GetMenu(self):
+        def create_variant(value):
+            if type(value) == bool:
+                return GLib.Variant('b', value)
+            elif type(value) == str:
+                return GLib.Variant('s', value)
+            elif type(value) == list:
+                value_dict = {}
+                for lkey, lval in value[0].items():
+                    value_dict[lkey] = create_variant(lval)
+                return GLib.Variant('a{sv}', value_dict)
+            else:
+                raise ValueError('Unhandled type: %s' % type(value))
+
+        items = []
+        for item in self.plugin.menuitems:
+            if not item.visible:
+                continue
+
+            item_dict = {}
+            for key, val in item:
+                    item_dict[key] = create_variant(val)
+
+            items.append(item_dict)
+        return items
+
+    @dbus_method(interface=DBUS_INTERFACE, in_signature='ai')
+    def ActivateMenuItem(self, indexes):
+        node = [item for item in self.plugin.menuitems if item.visible][indexes[0]]
+        for index in list(indexes)[1:]:
+            node = [item for item in node.submenu_items if item.visible][index]
+        if node.callback:
+            node.callback()
+
+
 class Menu(AppletPlugin):
     __description__ = _("Provides a menu for the applet and an API for other plugins to manipulate it")
     __icon__ = "menu-editor"
     __author__ = "Walmis"
     __unloadable__ = False
 
+    _connection = None
+    _dbus_service = None
+
+    menuitems = []
+
     def on_load(self):
         self.__plugins_loaded = False
 
-        self.__menuitems = []
+        self._connection = Gio.bus_get_sync(Gio.BusType.SESSION)
+        self._dbus_service = AppletMenuService(self, connection=self._connection)
+        self._dbus_service.connect_bus()
+
+    def on_unload(self):
+        self._connection = None
+        self._dbus_service.disconnec_bus()
+        self._dbus_service = None
 
     def __sort(self):
-        self.__menuitems.sort(key=attrgetter('priority'))
+        self.menuitems.sort(key=attrgetter('priority'))
 
     def add(self, owner, priority, text=None, markup=False, icon_name=None, tooltip=None, callback=None,
             submenu_function=None, visible=True, sensitive=True):
         item = MenuItem(self, owner, priority, text, markup, icon_name, tooltip, callback, submenu_function, visible,
                         sensitive)
-        self.__menuitems.append(item)
+        self.menuitems.append(item)
         if self.__plugins_loaded:
             self.__sort()
         self.on_menu_changed()
         return item
 
     def unregister(self, owner):
-        for item in reversed(self.__menuitems):
+        for item in reversed(self.menuitems):
             if item.owner == owner:
-                self.__menuitems.remove(item)
+                self.menuitems.remove(item)
         self.on_menu_changed()
 
     def on_plugins_loaded(self):
@@ -120,24 +179,4 @@ class Menu(AppletPlugin):
         self.__sort()
 
     def on_menu_changed(self):
-        self.MenuChanged(self.GetMenu())
-
-    @dbus.service.signal('org.blueman.Applet', signature='aa{sv}')
-    def MenuChanged(self, menu):
-        pass
-
-    @dbus.service.method('org.blueman.Applet', in_signature='', out_signature='aa{sv}')
-    def GetMenu(self):
-        items = [dict(item) for item in self.__menuitems if item.visible]
-        for item in items:
-            if 'submenu' in item:
-                item['submenu'] = dbus.Array(item['submenu'], signature="a{sv}")
-        return items
-
-    @dbus.service.method('org.blueman.Applet', in_signature='ai', out_signature='')
-    def ActivateMenuItem(self, indexes):
-        node = [item for item in self.__menuitems if item.visible][indexes[0]]
-        for index in list(indexes)[1:]:
-            node = [item for item in node.submenu_items if item.visible][index]
-        if node.callback:
-            node.callback()
+        self._dbus_service.MenuChanged(self._dbus_service.GetMenu())

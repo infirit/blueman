@@ -50,7 +50,7 @@ class ManagerDeviceMenu(Gtk.Menu):
         self._any_device.connect_signal('property-changed', self._on_service_property_changed)
 
         try:
-            self._appl = AppletService()
+            self._appl = AppletService(interface_name='org.blueman.Applet')
         except DBusProxyFailed:
             logging.error("** Failed to connect to applet", exc_info=True)
             self._appl = None

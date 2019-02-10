@@ -13,33 +13,35 @@ class BluemanTray(object):
     def __init__(self):
         check_single_instance("blueman-tray")
 
-        applet = AppletService()
-
         main_loop = GLib.MainLoop()
 
         Gio.bus_watch_name(Gio.BusType.SESSION, 'org.blueman.Applet',
                            Gio.BusNameWatcherFlags.NONE, None, lambda _connection, _name: main_loop.quit())
 
-        indicator_name = applet.GetStatusIconImplementation()
+        statusicon = AppletService(interface_name='org.blueman.Applet.StatusIcon')
+        menu = AppletService(interface_name='org.blueman.Applet.Menu')
+        indicator_name = statusicon.GetStatusIconImplementation()
         logging.info('Using indicator "%s"' % indicator_name)
         indicator_class = getattr(import_module('blueman.main.indicators.' + indicator_name), indicator_name)
-        self.indicator = indicator_class(applet.GetIconName(), self._activate_menu_item, self._activate_status_icon)
+        self.indicator = indicator_class(statusicon.GetIconName(), self._activate_menu_item, self._activate_status_icon)
 
-        applet.connect('g-signal', self.on_signal)
+        statusicon.connect('g-signal', self.on_signal)
+        menu.connect('g-signal', self.on_signal)
 
-        self.indicator.set_text(applet.GetText())
-        self.indicator.set_visibility(applet.GetVisibility())
-        self.indicator.set_menu(applet.GetMenu())
+        self.indicator.set_text(statusicon.GetText())
+        self.indicator.set_visibility(statusicon.GetVisibility())
+        self.indicator.set_menu(menu.GetMenu())
 
         main_loop.run()
 
     def _activate_menu_item(self, *indexes):
-        return AppletService().ActivateMenuItem('(ai)', indexes)
+        return AppletService(interface_name='org.blueman.Applet.Menu').ActivateMenuItem('(ai)', indexes)
 
     def _activate_status_icon(self):
-        return AppletService().Activate()
+        return AppletService(interface_name='org.blueman.Applet.StatusIcon').Activate()
 
     def on_signal(self, _applet, sender_name, signal_name, args):
+        print('***', signal_name, args)
         if signal_name == 'IconNameChanged':
             self.indicator.set_icon(*args)
         elif signal_name == 'TextChanged':

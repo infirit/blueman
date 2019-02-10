@@ -65,7 +65,7 @@ class Assistant:
         self.assistant.set_title(_("Bluetooth Assistant"))
         self.assistant.set_name("BluemanAssistant")
 
-        self.applet = AppletService()
+        self.applet = AppletService(interface_name='org.blueman.Applet')
 
         self.assistant.connect("prepare", self.on_prepare)
         self.assistant.connect("close", self.on_close)

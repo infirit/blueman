@@ -103,7 +103,7 @@ class Blueman(Gtk.Window):
             setup_icon_path()
 
             try:
-                self.Applet = AppletService()
+                self.Applet = AppletService(interface_name='org.blueman.Applet')
             except DBusProxyFailed:
                 print("Blueman applet needs to be running")
                 exit()

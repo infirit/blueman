@@ -33,7 +33,7 @@ class Services(ManagerPlugin):
 
     def on_request_menu_items(self, manager_menu, device):
         items = []
-        appl = AppletService()
+        appl = AppletService(interface_name='org.blueman.Applet')
 
         self.has_dun = False
         serial_items = []

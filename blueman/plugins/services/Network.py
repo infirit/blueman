@@ -205,7 +205,7 @@ class Network(ServicePlugin):
 
         nap_enable.bind_property("active", nap_frame, "sensitive", 0)
 
-        applet = AppletService()
+        applet = AppletService(interface_name='org.blueman.Applet')
 
         avail_plugins = applet.QueryAvailablePlugins()
         active_plugins = applet.QueryPlugins()
