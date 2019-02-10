@@ -25,45 +25,38 @@ from gi.repository import (
     Gio
 )
 
-__all__ = ['dbus_method', 'dbus_property', 'dbus_signal', 'DBusServiceObject']
+__all__ = ['dbus_method', 'DBusPropery', 'dbus_signal', 'DBusServiceObject']
 
-class DBusAnnotationInfo:
-    def __init__(self):
-        key = None
-        value = None
-        annotations = []
 
 class DBusArgInfo:
     def __init__(self, name="", signature=""):
         self.name = name
         self.signature = signature
 
+
 class DBusMethodInfo:
-    def __init__(self, name="", interface=None, in_args=[], out_args=[], invocation=None, annotations=[]):
+    def __init__(self, name="", interface=None, in_args=None, out_args=None, invocation=None, annotations=None):
         self.name = name
         self.interface = interface
-        self.in_args = in_args
-        self.out_args = out_args
+        self.in_args = in_args if in_args else []
+        self.out_args = out_args if out_args else []
         self.invocation = invocation
-        self.annotations = annotations
+        self.annotations = annotations if annotations else []
 
     def generate_xml(self):
         method = ElementTree.Element('method', {'name': self.name})
         for arg in self.in_args:
-            ElementTree.SubElement(method, 'arg', {'name': arg.name,
-                                           'type': arg.signature,
-                                           'direction': 'in'})
+            ElementTree.SubElement(method, 'arg', {'name': arg.name, 'type': arg.signature, 'direction': 'in'})
         for arg in self.out_args:
-            ElementTree.SubElement(method, 'arg', {'name': arg.name,
-                                           'type': arg.signature,
-                                           'direction': 'out'})
+            ElementTree.SubElement(method, 'arg', {'name': arg.name, 'type': arg.signature, 'direction': 'out'})
         return method
 
+
 class DBusSignalInfo:
-    def __init__(self, name="", args=[], annotations=[], interface=None):
+    def __init__(self, name="", args=None, annotations=None, interface=None):
         self.name = name
-        self.args = args
-        self.annotations = annotations
+        self.args = args if args else []
+        self.annotations = annotations if annotations else []
         self.interface = interface
 
     def generate_xml(self):
@@ -72,13 +65,14 @@ class DBusSignalInfo:
             ElementTree.SubElement(signal, 'arg', {'name': arg.name, 'type': arg.signature})
         return signal
 
+
 class DBusPropertyInfo:
-    def __init__(self, name="", interface=None, signature=[], flags=Gio.DBusPropertyInfoFlags.NONE, annotations=[]):
+    def __init__(self, name="", interface=None, signature=None, flags=Gio.DBusPropertyInfoFlags.NONE, annotations=None):
         self.name = name
         self.interface = interface
-        self.signature = signature
+        self.signature = signature if signature else []
         self.flags = flags
-        self.annotations = annotations
+        self.annotations = annotations if annotations else []
 
     def generate_xml(self):
         access = ''
@@ -92,6 +86,7 @@ class DBusPropertyInfo:
                                                 'access': access})
         return prop
 
+
 class DBusInterfaceInfo:
     def __init__(self, name=''):
         self.name = name
@@ -100,11 +95,12 @@ class DBusInterfaceInfo:
         self.properties = []
         self.annotations = []
 
-    def generate_xml(self, indent=0):
+    def generate_xml(self):
         interface = ElementTree.Element('interface', {'name': self.name})
         for member in self.methods + self.properties + self.annotations + self.signals:
             interface.append(member.generate_xml())
         return interface
+
 
 class DBusNodeInfo:
     def __init__(self, path=""):
@@ -113,11 +109,12 @@ class DBusNodeInfo:
         self.nodes = []
         self.annotations = []
 
-    def generate_xml(self, indent=0):
+    def generate_xml(self):
         node = ElementTree.Element('node', {'name': self.path})
         for interface in self.interfaces.values():
             node.append(interface.generate_xml())
         return node
+
 
 class DBusMethodInvocation(object):
     def __init__(self, invocation, signature):
@@ -154,27 +151,29 @@ class DBusMethodInvocation(object):
     def path(self):
         return self._invocation.get_object_path()
 
+
 def _create_arginfo_list(func, signature, invocation_keyword=None):
-    arg_names = inspect.getargspec(func).args
-    signature_list = GLib.Variant.split_signature('(%s)' %signature) if signature else []
-    arg_names.pop(0) # eat "self" argument
+    arg_names = inspect.getfullargspec(func).args
+    signature_list = GLib.Variant.split_signature('(%s)' % signature) if signature else []
+    arg_names.pop(0)  # eat "self" argument
 
     if invocation_keyword and invocation_keyword in arg_names:
         arg_names.remove(invocation_keyword)
 
     if len(signature_list) != len(arg_names):
         raise TypeError('Specified signature %s for method %s does not match length of arguments'
-                        %(str(signature_list), func.__name__))
+                        % (str(signature_list), func.__name__))
 
     args = []
     for arg_signature, arg_name in zip(signature_list, arg_names):
         args.append(DBusArgInfo(name=arg_name, signature=arg_signature))
     return args
 
+
 def dbus_method(interface, in_signature=None, out_signature=None, invocation_keyword=None):
     def decorator(func):
         in_args = _create_arginfo_list(func, in_signature, invocation_keyword)
-        out_args = [DBusArgInfo(name='return', signature=out_signature),] if out_signature else []
+        out_args = [DBusArgInfo(name='return', signature=out_signature), ] if out_signature else []
         func._dbus_info = DBusMethodInfo(name=func.__name__,
                                          interface=interface,
                                          in_args=in_args,
@@ -184,15 +183,14 @@ def dbus_method(interface, in_signature=None, out_signature=None, invocation_key
 
     return decorator
 
+
 def dbus_signal(interface, signature=None):
     def decorator(func):
         args = _create_arginfo_list(func, signature)
-        info = DBusSignalInfo(name=func.__name__,
-                                   interface=interface,
-                                   args=args)
+        info = DBusSignalInfo(name=func.__name__, interface=interface, args=args)
 
         def wrapper(self, *args):
-            params = GLib.Variant('(%s)' %signature, args) if signature else None
+            params = GLib.Variant('(%s)' % signature, args) if signature else None
             try:
                 self.connection.emit_signal(None, self.object_path,
                                             interface, func.__name__,
@@ -206,7 +204,8 @@ def dbus_signal(interface, signature=None):
 
     return decorator
 
-class dbus_property(object):
+
+class DBusPropery(object):
     def __init__(self, interface, signature, fget=None, fset=None):
         # check if fget is a data descriptor => a property
         if hasattr(fget, '__set__') and hasattr(fget, '__get__'):
@@ -224,9 +223,7 @@ class dbus_property(object):
             flags |= Gio.DBusPropertyInfoFlags.READABLE
         if prop.fset is not None:
             flags |= Gio.DBusPropertyInfoFlags.WRITABLE
-        self._dbus_info = DBusPropertyInfo(interface=interface,
-                                          signature=signature,
-                                          flags=flags)
+        self._dbus_info = DBusPropertyInfo(interface=interface, signature=signature, flags=flags)
 
     def __call__(self, arg):
         # check if we're decorating a data descriptor => a property
@@ -278,8 +275,7 @@ class dbus_property(object):
 
 
 class DBusServiceObject(GObject.Object):
-    object_path = GObject.Property(type=str,
-                                   flags=GObject.ParamFlags.READWRITE|GObject.ParamFlags.CONSTRUCT_ONLY)
+    object_path = GObject.Property(type=str, flags=GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT_ONLY)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -316,7 +312,7 @@ class DBusServiceObject(GObject.Object):
             self.__dbus_unexport()
 
     @GObject.Property(type=Gio.DBusConnection,
-                      flags=GObject.ParamFlags.READWRITE|GObject.ParamFlags.CONSTRUCT)
+                      flags=GObject.ParamFlags.READWRITE | GObject.ParamFlags.CONSTRUCT)
     def connection(self):
         return self.__connection
 
@@ -333,7 +329,7 @@ class DBusServiceObject(GObject.Object):
     def __dbus_export(self):
         xml = ElementTree.tostring(self.__dbus_info.generate_xml(), encoding='unicode')
         node_info = Gio.DBusNodeInfo.new_for_xml(xml)
-        logging.debug('--- XML: ---\n%s\n-------' %node_info.generate_xml(0).str)
+        logging.debug('--- XML: ---\n%s\n-------' % node_info.generate_xml(0).str)
 
         for interface in self.__dbus_info.interfaces:
             regid = self.connection.register_object(
@@ -357,9 +353,8 @@ class DBusServiceObject(GObject.Object):
             method = getattr(self, method_name)
             info = method._dbus_info
         except AttributeError:
-            invocation.return_error_literal(Gio.dbus_error_quark(),
-                    Gio.DBusError.UNKNOWN_METHOD,
-                    'No such interface or method: %s.%s' % (iface_name, method_name))
+            invocation.return_error_literal(Gio.dbus_error_quark(), Gio.DBusError.UNKNOWN_METHOD,
+                                            'No such interface or method: %s.%s' % (iface_name, method_name))
             return
 
         kwargs = {}
@@ -381,11 +376,11 @@ class DBusServiceObject(GObject.Object):
             if ret is None and not info.out_args:
                 invocation.return_value(None)
             else:
-                invocation.return_value(GLib.Variant('(%s)' %info.out_args[0].signature, (ret,)))
+                invocation.return_value(GLib.Variant('(%s)' % info.out_args[0].signature, (ret,)))
         except Exception as e:
             invocation.return_error_literal(Gio.dbus_error_quark(),
-                    Gio.DBusError.IO_ERROR,
-                    'Method %s.%s failed with: %s' % (iface_name, method_name, str(e)))
+                                            Gio.DBusError.IO_ERROR,
+                                            'Method %s.%s failed with: %s' % (iface_name, method_name, str(e)))
 
     def __dbus_get_property(self, conn, sender, object_path, iface_name, prop_name):
         try:
@@ -396,9 +391,9 @@ class DBusServiceObject(GObject.Object):
         return GLib.Variant(info.signature, ret)
 
     def __dbus_set_property(self, conn, sender, object_path, iface_name, prop_name, value):
-        try:
-            info = getattr(type(self), prop_name)._dbus_info
-            ret = setattr(self, prop_name, value.unpack())
-        except AttributeError:
+        attr = getattr(type(self), prop_name)
+        if hasattr(attr, '_dbus_info'):
+            setattr(self, prop_name, value.unpack())
+            return True
+        else:
             return False
-        return True
