@@ -318,7 +318,7 @@ class DBusServiceObject(GObject.Object):
 
     @connection.setter
     def __set_connection(self, conn):
-        prev = None if not hasattr(self, '__connection') else self.__connection
+        prev = self.get_property('connection')
         if prev:
             self.__dbus_unexport()
         self.__connection = conn
