@@ -41,6 +41,8 @@ class DhcpClient(AppletPlugin):
         self._dbus_service.connect_bus()
 
     def on_unload(self):
+        self._any_network.disconnect_by_func(self._on_network_prop_changed)
+        self._any_network = None
         self._dbus_service.disconnect_bus()
         self._dbus_service = None
 
