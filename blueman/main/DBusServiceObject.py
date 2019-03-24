@@ -35,11 +35,12 @@ class DBusArgInfo:
 
 
 class DBusMethodInfo:
-    def __init__(self, name="", interface=None, in_args=None, out_args=None, invocation=None, annotations=None):
+    def __init__(self, name="", interface=None, in_args=None, out_args=None, sender=None, invocation=None, annotations=None):
         self.name = name
         self.interface = interface
         self.in_args = in_args if in_args else []
         self.out_args = out_args if out_args else []
+        self.sender = sender
         self.invocation = invocation
         self.annotations = annotations if annotations else []
 
@@ -152,13 +153,16 @@ class DBusMethodInvocation(object):
         return self._invocation.get_object_path()
 
 
-def _create_arginfo_list(func, signature, invocation_keyword=None):
+def _create_arginfo_list(func, signature, sender_keyword=None, invocation_keyword=None):
     arg_names = inspect.getfullargspec(func).args
     signature_list = GLib.Variant.split_signature('(%s)' % signature) if signature else []
     arg_names.pop(0)  # eat "self" argument
 
     if invocation_keyword and invocation_keyword in arg_names:
         arg_names.remove(invocation_keyword)
+
+    if sender_keyword and sender_keyword in arg_names:
+        arg_names.remove(sender_keyword)
 
     if len(signature_list) != len(arg_names):
         raise TypeError('Specified signature %s for method %s does not match length of arguments'
@@ -170,14 +174,15 @@ def _create_arginfo_list(func, signature, invocation_keyword=None):
     return args
 
 
-def dbus_method(interface, in_signature=None, out_signature=None, invocation_keyword=None):
+def dbus_method(interface, in_signature=None, out_signature=None, sender_keyword=None, invocation_keyword=None):
     def decorator(func):
-        in_args = _create_arginfo_list(func, in_signature, invocation_keyword)
+        in_args = _create_arginfo_list(func, in_signature, sender_keyword, invocation_keyword)
         out_args = [DBusArgInfo(name='return', signature=out_signature), ] if out_signature else []
         func._dbus_info = DBusMethodInfo(name=func.__name__,
                                          interface=interface,
                                          in_args=in_args,
                                          out_args=out_args,
+                                         sender=sender_keyword,
                                          invocation=invocation_keyword)
         return func
 
@@ -368,6 +373,9 @@ class DBusServiceObject(GObject.Object):
 
             method_invocation = DBusMethodInvocation(invocation, signature)
             kwargs[info.invocation] = method_invocation
+
+        if info.sender:
+            kwargs[info.sender] = sender
 
         try:
             ret = method(*parameters.unpack(), **kwargs)
