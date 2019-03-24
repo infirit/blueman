@@ -8,12 +8,16 @@ class DBusProxyFailed(Exception):
 
 
 class ProxyBaseMeta(GObjectMeta):
-    _instance = None
+    _instances = {}
 
     def __call__(cls, *args, **kwargs):
-        if not cls._instance:
-            cls._instance = super().__call__(*args, **kwargs)
-        return cls._instance
+        interface_name = kwargs.get('interface_name')
+        if interface_name is None:
+            raise ValueError('the keyword interface_name is required for proper operation')
+
+        if interface_name not in cls._instances:
+            cls._instances[interface_name] = super().__call__(*args, **kwargs)
+        return cls._instances[interface_name]
 
 
 class ProxyBase(Gio.DBusProxy, metaclass=ProxyBaseMeta):
