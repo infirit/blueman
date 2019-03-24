@@ -42,7 +42,7 @@ class Networking(AppletPlugin):
             d.run()
             d.destroy()
 
-        m = Mechanism()
+        m = Mechanism(interface_name='org.blueman.Mechanism.Network')
         m.ReloadNetwork(result_handler=reply, error_handler=err)
 
     def on_unload(self):

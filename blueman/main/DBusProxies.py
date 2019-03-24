@@ -48,7 +48,7 @@ class ProxyBase(Gio.DBusProxy, metaclass=ProxyBaseMeta):
 
 class Mechanism(ProxyBase):
     def __init__(self, interface_name, name='org.blueman.Mechanism',
-                 object_path='/', **kwargs):
+                 object_path='/org/blueman/Mechanism', **kwargs):
         super().__init__(name=name, interface_name=interface_name, object_path=object_path, systembus=True, **kwargs)
 
 

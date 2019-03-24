@@ -76,5 +76,5 @@ class DhcpClient(AppletPlugin):
             Notification(_("Bluetooth Network"), _("Trying to obtain an IP address on %s\nPlease wait…" % device),
                          icon_name="network-workgroup").show()
 
-            m = Mechanism()
+            m = Mechanism(interface_name='org.blueman.Mechanism.Network')
             m.DhcpClient('(s)', device, result_handler=reply, error_handler=err, timeout=120)

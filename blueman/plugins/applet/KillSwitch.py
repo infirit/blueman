@@ -149,7 +149,7 @@ class KillSwitch(AppletPlugin):
                                             result_handler=reply, error_handler=error)
         else:
             logging.debug("Using mechanism to set state: %s" % state)
-            Mechanism().SetRfkillState('(b)', state, result_handler=reply, error_handler=error)
+            Mechanism(interface_name='org.blueman.Mechanism.Rfkill').SetRfkillState('(b)', state, result_handler=reply, error_handler=error)
 
     def on_query_status_icon_visibility(self):
         # Force status icon to show if bluetooth is soft-blocked

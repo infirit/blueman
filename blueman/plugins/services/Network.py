@@ -57,7 +57,7 @@ class Network(ServicePlugin):
         if self.on_query_apply_state():
             logging.info("network apply")
 
-            m = Mechanism()
+            m = Mechanism(interface_name='org.blueman.Mechanism.Network')
             nap_enable = self.Builder.get_object("nap-enable")
             if nap_enable.props.active:
 
