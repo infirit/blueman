@@ -263,7 +263,7 @@ class ManagerMenu:
         item, adapter = self.adapter_items.pop(adapter_path)
         menu = self.item_adapter.get_submenu()
 
-        item.disconnect_by_func(self.on_adapter_selected, adapter.get_object_path())
+        item.disconnect_by_func(self.on_adapter_selected)
         adapter.disconnect_by_func(self.on_adapter_property_changed)
 
         menu.remove(item)

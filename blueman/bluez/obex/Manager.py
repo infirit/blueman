@@ -66,8 +66,9 @@ class Manager(GObject.GObject, metaclass=SingletonGObjectMeta):
             logging.info(object_path)
             transfer = self.__transfers.pop(object_path)
 
-            transfer.disconnect_by_func(self._on_transfer_completed, True)
-            transfer.disconnect_by_func(self._on_transfer_completed, False)
+            # Disconnect as many times as we connect (pygobject bug #106)
+            transfer.disconnect_by_func(self._on_transfer_completed)
+            transfer.disconnect_by_func(self._on_transfer_completed)
 
         if session_proxy:
             logging.info(object_path)

@@ -179,8 +179,9 @@ class PluginDialog(Gtk.Window):
                 return 1
 
     def _on_close(self, *args, **kwargs):
-        self.applet.Plugins.disconnect_by_func(self.plugin_state_changed, True)
-        self.applet.Plugins.disconnect_by_func(self.plugin_state_changed, False)
+        # Disconnect as many times as we connect (pygobject bug #106)
+        self.applet.Plugins.disconnect_by_func(self.plugin_state_changed)
+        self.applet.Plugins.disconnect_by_func(self.plugin_state_changed)
 
     def on_selection_changed(self, selection):
         model, tree_iter = selection.get_selected()

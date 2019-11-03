@@ -34,7 +34,7 @@ class SerialService(Service):
     ) -> None:
         if event_type == Gio.FileMonitorEvent.DELETED:
             logging.info('%s got deleted' % file.get_path())
-            monitor.disconnect_by_func(self.on_file_changed, port)
+            monitor.disconnect_by_func(self.on_file_changed)
         elif event_type == Gio.FileMonitorEvent.ATTRIBUTE_CHANGED:
             self.try_replace_root_watcher(monitor, file.get_path(), port)
 
@@ -46,7 +46,7 @@ class SerialService(Service):
         logging.info('Replacing root watcher')
         Mechanism().CloseRFCOMM('(d)', port)
         subprocess.Popen([RFCOMM_WATCHER_PATH, path])
-        monitor.disconnect_by_func(self.on_file_changed, port)
+        monitor.disconnect_by_func(self.on_file_changed)
 
     def connect(
         self,
