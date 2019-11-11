@@ -3,7 +3,7 @@ from gettext import gettext as _
 from typing import Dict
 
 from blueman.main.Config import Config
-from blueman.bluez import NetworkServer
+from blueman.bluez import Adapter
 from blueman.main.DBusProxies import Mechanism
 
 from blueman.plugins.AppletPlugin import AppletPlugin
@@ -50,8 +50,8 @@ class Networking(AppletPlugin):
 
     def on_unload(self):
         for adapter_path in self._registered:
-            s = NetworkServer(obj_path=adapter_path)
-            s.unregister("nap")
+            adapter = Adapter(obj_path=adapter_path)
+            adapter.unregister("nap")
 
         self._registered = {}
         del self.Config
@@ -75,10 +75,9 @@ class Networking(AppletPlugin):
 
                 registered = self._registered.setdefault(object_path, False)
 
-                s = NetworkServer(obj_path=object_path)
                 if on and not registered:
-                    s.register("nap", "pan1")
+                    adapter.register_network("nap", "pan1")
                     self._registered[object_path] = True
                 elif not on and registered:
-                    s.unregister("nap")
+                    adapter.unregister_network("nap")
                     self._registered[object_path] = False

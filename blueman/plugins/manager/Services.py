@@ -2,7 +2,6 @@
 from gettext import gettext as _
 
 import cairo
-from blueman.bluez import Network
 from blueman.plugins.ManagerPlugin import ManagerPlugin
 from blueman.Functions import create_menuitem
 from blueman.main.DBusProxies import AppletService
@@ -80,7 +79,7 @@ class Services(ManagerPlugin):
             if isinstance(service, NetworkService) and service.connected:
                 if "DhcpClient" in appl.QueryPlugins():
                     def renew(x):
-                        appl.DhcpClient('(s)', Network(device.get_object_path())["Interface"])
+                        appl.DhcpClient('(s)', device.network_interface)
 
                     item = create_menuitem(_("Renew IP Address"), "view-refresh")
                     item.connect("activate", renew)

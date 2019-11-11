@@ -2,13 +2,12 @@
 from typing import Optional, Callable
 
 from blueman.Service import Service
-from blueman.bluez import Device, Network, BluezDBusException
+from blueman.bluez import Device, BluezDBusException
 
 
 class NetworkService(Service):
     def __init__(self, device: Device, uuid: str):
         super().__init__(device, uuid)
-        self._service = Network(obj_path=device.get_object_path())
 
     @property
     def available(self) -> bool:
@@ -21,19 +20,18 @@ class NetworkService(Service):
         if not self.available:
             return False
 
-        connected: bool = self._service["Connected"]
-        return connected
+        return self.device.network_connected
 
     def connect(
         self,
         reply_handler: Optional[Callable[[str], None]] = None,
         error_handler: Optional[Callable[[BluezDBusException], None]] = None,
     ) -> None:
-        self._service.connect(self.uuid, reply_handler=reply_handler, error_handler=error_handler)
+        self.device.connect_server(self.uuid, reply_handler=reply_handler, error_handler=error_handler)
 
     def disconnect(
         self,
         reply_handler: Optional[Callable[[], None]] = None,
         error_handler: Optional[Callable[[BluezDBusException], None]] = None,
     ) -> None:
-        self._service.disconnect(reply_handler=reply_handler, error_handler=error_handler)
+        self.device.disconnect_server(reply_handler=reply_handler, error_handler=error_handler)

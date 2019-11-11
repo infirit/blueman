@@ -145,18 +145,17 @@ def parse_dbus_error(exception: GLib.Error) -> BluezDBusException:
 class BaseMeta(GObjectMeta):
     def __call__(cls, **kwargs: str) -> "Base":
         if not hasattr(cls, "__instances__"):
-            cls.__instances__: Dict[str, Dict[str, "Base"]] = {}
+            cls.__instances__: Dict[str, "Base"] = {}
 
         path = kwargs.get('obj_path')
         if path is None:
             path = cls._obj_path
 
-        if cls._interface_name in cls.__instances__:
-            if path in cls.__instances__[cls._interface_name]:
-                return cls.__instances__[cls._interface_name][path]
+        if path in cls.__instances__:
+            return cls.__instances__[path]
 
         instance: "Base" = super().__call__(**kwargs)
-        cls.__instances__[cls._interface_name] = {path: instance}
+        cls.__instances__[path] = instance
 
         return instance
 
@@ -220,11 +219,14 @@ class Base(Gio.DBusProxy, metaclass=BaseMeta):
         self.call(method, param, Gio.DBusCallFlags.NONE, GLib.MAXINT, None,
                   callback, reply_handler, error_handler)
 
-    def get(self, name: str) -> Any:
+    def get(self, name: str, interface_name: Optional[str] = None) -> Any:
+        if interface_name is None:
+            interface_name = self._interface_name
+
         try:
             prop = self.call_sync(
                 'org.freedesktop.DBus.Properties.Get',
-                GLib.Variant('(ss)', (self._interface_name, name)),
+                GLib.Variant('(ss)', (interface_name, name)),
                 Gio.DBusCallFlags.NONE,
                 GLib.MAXINT,
                 None)
@@ -300,28 +302,31 @@ class Device(Base):
     ) -> None:
         self._call('Disconnect', reply_handler=reply_handler, error_handler=error_handler)
 
-
-class Network(Base):
-    _interface_name = 'org.bluez.Network1'
-
-    def __init__(self, obj_path: str):
-        super().__init__(obj_path=obj_path)
-
-    def connect(
+    def connect_network(
         self,
         uuid: str,
         reply_handler: Optional[Callable[[str], None]] = None,
         error_handler: Optional[Callable[[BluezDBusException], None]] = None,
     ) -> None:
         param = GLib.Variant('(s)', (uuid,))
-        self._call('Connect', param, reply_handler=reply_handler, error_handler=error_handler)
+        self._call('org.bluez.Network1.Connect', param, reply_handler=reply_handler, error_handler=error_handler)
 
-    def disconnect(
+    def disconnect_network(
         self,
         reply_handler: Optional[Callable[[], None]] = None,
         error_handler: Optional[Callable[[BluezDBusException], None]] = None,
     ) -> None:
-        self._call('Disconnect', reply_handler=reply_handler, error_handler=error_handler)
+        self._call('org.bluez.Network1.Disconnect', reply_handler=reply_handler, error_handler=error_handler)
+
+    @property
+    def network_connected(self) -> bool:
+        connected: bool = self.get("Connected", "org.bluez.Network1")
+        return connected
+
+    @property
+    def network_interface(self) -> str:
+        interface_name: str = self.get("Interface")
+        return interface_name
 
 
 class Adapter(Base):
@@ -347,20 +352,13 @@ class Adapter(Base):
     def set_name(self, name: str) -> None:
         self.set('Alias', name)
 
-
-class NetworkServer(Base):
-    _interface_name = 'org.bluez.NetworkServer1'
-
-    def __init__(self, obj_path: str):
-        super().__init__(obj_path=obj_path)
-
-    def register(self, uuid: str, bridge: str) -> None:
+    def register_network(self, uuid: str, bridge: str) -> None:
         param = GLib.Variant('(ss)', (uuid, bridge))
-        self._call('Register', param)
+        self._call('org.bluez.NetworkServer1.Register', param)
 
-    def unregister(self, uuid: str) -> None:
+    def unregister_network(self, uuid: str) -> None:
         param = GLib.Variant('(s)', (uuid,))
-        self._call('Unregister', param)
+        self._call('org.bluez.NetworkServer1.Unregister', param)
 
 
 class Manager(GObject.GObject, metaclass=SingletonGObjectMeta):
