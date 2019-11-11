@@ -1,5 +1,6 @@
 # coding=utf-8
 from typing import Optional, Callable
+from gi.repository import GLib
 
 from blueman.bluez.Base import Base
 from blueman.bluez.AnyBase import AnyBase
@@ -32,6 +33,22 @@ class Device(Base):
         error_handler: Optional[Callable[[BluezDBusException], None]] = None,
     ) -> None:
         self._call('Disconnect', reply_handler=reply_handler, error_handler=error_handler)
+
+    def network_connect(
+        self,
+        uuid: str,
+        reply_handler: Optional[Callable[[str], None]] = None,
+        error_handler: Optional[Callable[[BluezDBusException], None]] = None,
+    ) -> None:
+        param = GLib.Variant('(s)', (uuid,))
+        self._call('org.bluez.Network1.Connect', param, reply_handler=reply_handler, error_handler=error_handler)
+
+    def network_disconnect(
+        self,
+        reply_handler: Optional[Callable[[], None]] = None,
+        error_handler: Optional[Callable[[BluezDBusException], None]] = None,
+    ) -> None:
+        self._call('org.bluez.Network1.Disconnect', reply_handler=reply_handler, error_handler=error_handler)
 
 
 class AnyDevice(AnyBase):
