@@ -4,7 +4,7 @@ from gettext import gettext as _
 import logging
 
 from blueman.plugins.AppletPlugin import AppletPlugin
-from blueman.bluez.Adapter import Adapter
+from blueman.bluez import Adapter
 
 from gi.repository import GLib
 

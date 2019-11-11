@@ -5,8 +5,7 @@ import time
 import logging
 from typing import Dict, List, TYPE_CHECKING, Optional, Callable
 
-from blueman.bluez.Device import Device
-from blueman.bluez.errors import DBusNoSuchAdapterError
+from blueman.bluez import Device, DBusNoSuchAdapterError
 from blueman.gui.Notification import Notification
 from blueman.Sdp import ServiceUUID
 from blueman.plugins.AppletPlugin import AppletPlugin

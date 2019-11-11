@@ -2,7 +2,7 @@
 from typing import Optional
 
 from blueman.Sdp import ServiceUUID
-from blueman.bluez.Device import Device
+from blueman.bluez import Device
 
 
 class Service(object):

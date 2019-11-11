@@ -1,7 +1,7 @@
 # coding=utf-8
 from gettext import gettext as _
 
-from blueman.bluez.errors import DBusNoSuchAdapterError
+from blueman.bluez import DBusNoSuchAdapterError
 from blueman.plugins.AppletPlugin import AppletPlugin
 from gi.repository import GLib
 import logging

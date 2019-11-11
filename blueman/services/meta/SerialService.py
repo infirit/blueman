@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 from gi.repository import Gio, GLib
 
-from blueman.bluez.Adapter import Adapter
+from blueman.bluez import Adapter
 from _blueman import create_rfcomm_device, get_rfcomm_channel, RFCOMMError
 from blueman.Service import Service
 from blueman.main.DBusProxies import Mechanism

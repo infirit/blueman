@@ -7,10 +7,7 @@ import logging
 from html import escape
 from typing import List, Dict, TYPE_CHECKING
 
-from blueman.bluez.obex.AgentManager import AgentManager
-from blueman.bluez.obex.Manager import Manager
-from blueman.bluez.obex.Transfer import Transfer
-from blueman.bluez.obex.Session import Session
+from blueman.obex import AgentManager, Manager, Transfer, Session
 from blueman.Functions import launch
 from blueman.gui.Notification import Notification
 from blueman.main.DbusService import DbusService, DbusError

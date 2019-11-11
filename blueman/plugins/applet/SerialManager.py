@@ -11,7 +11,7 @@ from subprocess import Popen
 import logging
 import os
 import signal
-from blueman.bluez.Device import Device
+from blueman.bluez import Device
 from gi.repository import GLib
 
 from blueman.services.meta import SerialService

@@ -6,8 +6,7 @@ from typing import Dict, List, Tuple, Optional
 
 from blueman.Constants import UI_PATH
 from blueman.Functions import create_menuitem, e_
-from blueman.bluez.Network import AnyNetwork
-from blueman.bluez.Device import AnyDevice, Device
+from blueman.bluez import AnyNetwork, AnyDevice, Device
 from blueman.gui.manager.ManagerProgressbar import ManagerProgressbar
 from blueman.main.DBusProxies import AppletService, DBusProxyFailed
 from blueman.gui.MessageArea import MessageArea

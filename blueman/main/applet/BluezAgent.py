@@ -7,8 +7,7 @@ from html import escape
 import random
 from xml.etree import ElementTree
 
-from blueman.bluez.Device import Device
-from blueman.bluez.AgentManager import AgentManager
+from blueman.bluez import Device, AgentManager
 from blueman.Sdp import ServiceUUID
 from blueman.Constants import *
 from blueman.gui.Notification import Notification

@@ -2,7 +2,7 @@
 from gettext import gettext as _
 import logging
 
-from blueman.bluez.Device import Device
+from blueman.bluez import Device
 from blueman.Functions import launch
 from blueman.plugins.AppletPlugin import AppletPlugin
 

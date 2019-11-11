@@ -4,7 +4,7 @@ from gettext import gettext as _
 import logging
 from typing import List
 
-from blueman.bluez.Network import AnyNetwork
+from blueman.bluez import AnyNetwork
 from blueman.gui.Notification import Notification
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.main.DBusProxies import Mechanism

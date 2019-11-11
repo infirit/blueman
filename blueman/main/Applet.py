@@ -1,8 +1,6 @@
 # coding=utf-8
 from blueman.Functions import *
-from blueman.bluez.Manager import Manager
-from blueman.bluez.Adapter import AnyAdapter
-from blueman.bluez.Device import AnyDevice
+from blueman.bluez import Manager, AnyAdapter, AnyDevice
 import blueman.plugins.applet
 from blueman.main.PluginManager import PersistentPluginManager
 from blueman.main.DbusService import DbusService

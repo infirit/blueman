@@ -13,11 +13,8 @@ from blueman.typing import GSignals
 gi.require_version("Gtk", "3.0")
 gi.require_version("Gdk", "3.0")
 
-from blueman.bluez.Adapter import Adapter
-from blueman.bluez.obex.ObjectPush import ObjectPush
-from blueman.bluez.obex.Manager import Manager
-from blueman.bluez.obex.Client import Client
-from blueman.bluez.obex.Transfer import Transfer
+from blueman.bluez import Adapter
+from blueman.obex import ObjectPush, Manager, Client, Transfer
 from blueman.Functions import format_bytes
 from blueman.Constants import UI_PATH
 from blueman.main.SpeedCalc import SpeedCalc

@@ -1,5 +1,4 @@
 SUBDIRS =	\
-	bluez	\
 	gui		\
 	main	\
 	plugins \
@@ -7,6 +6,8 @@ SUBDIRS =	\
 
 bluemandir = $(pythondir)/blueman
 blueman_PYTHON = 	\
+	bluez.py        \
+	obex.py         \
 	Constants.py	\
 	DeviceClass.py	\
 	Functions.py	\

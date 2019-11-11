@@ -12,8 +12,7 @@ from blueman.Functions import *
 from blueman.Constants import *
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.main.Config import Config
-from blueman.bluez.Device import Device
-from blueman.bluez.Network import AnyNetwork
+from blueman.bluez import Device, AnyNetwork
 from gi.repository import GObject
 from gi.repository import GLib
 

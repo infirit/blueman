@@ -3,8 +3,7 @@ from gettext import gettext as _
 import logging
 from typing import Dict, Tuple, List
 
-from blueman.bluez.Adapter import Adapter
-from blueman.bluez.Manager import Manager
+from blueman.bluez import Adapter, Manager
 from blueman.main.Config import Config
 from blueman.gui.manager.ManagerDeviceMenu import ManagerDeviceMenu
 from blueman.gui.CommonUi import show_about_dialog

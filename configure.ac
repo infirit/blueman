@@ -252,8 +252,6 @@ apps/blueman-services
 apps/blueman-tray
 blueman/Makefile
 blueman/Constants.py
-blueman/bluez/Makefile
-blueman/bluez/obex/Makefile
 blueman/gui/Makefile
 blueman/gui/applet/Makefile
 blueman/gui/manager/Makefile

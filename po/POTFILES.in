@@ -52,11 +52,7 @@ blueman/DeviceClass.py
 blueman/__init__.py
 blueman/Sdp.py
 blueman/Constants.py.in
-blueman/bluez/Adapter.py
-blueman/bluez/errors.py
-blueman/bluez/Device.py
-blueman/bluez/Manager.py
-blueman/bluez/__init__.py
+blueman/bluez.py
 blueman/plugins/mechanism/RfKill.py
 blueman/plugins/mechanism/Network.py
 blueman/plugins/mechanism/Ppp.py

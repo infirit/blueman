@@ -7,8 +7,7 @@ from typing import Dict, TYPE_CHECKING
 
 from blueman.Constants import UI_PATH
 from blueman.Functions import *
-from blueman.bluez.Manager import Manager
-from blueman.bluez.Adapter import Adapter
+from blueman.bluez import Manager, Adapter
 
 import gi
 gi.require_version("Gtk", "3.0")

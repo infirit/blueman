@@ -8,10 +8,7 @@ from blueman.Functions import adapter_path_to_name
 from blueman.gui.GenericList import GenericList
 from blueman.Constants import ICON_PATH
 from _blueman import conn_info, ConnInfoReadError
-from blueman.bluez.Manager import Manager
-from blueman.bluez.Device import Device, AnyDevice
-from blueman.bluez.Adapter import Adapter, AnyAdapter
-from blueman.bluez.errors import DBusNoSuchAdapterError
+from blueman.bluez import Manager, Device, AnyDevice, Adapter, AnyAdapter, DBusNoSuchAdapterError
 
 from gi.repository import GObject
 from gi.repository import GLib

@@ -2,8 +2,7 @@
 import logging
 from gettext import gettext as _, bind_textdomain_codeset
 
-from blueman.bluez.Manager import Manager
-from blueman.bluez.errors import DBusNoSuchAdapterError
+from blueman.bluez import Manager, DBusNoSuchAdapterError
 from blueman.Functions import *
 from blueman.Constants import UI_PATH
 from blueman.gui.manager.ManagerDeviceList import ManagerDeviceList

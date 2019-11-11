@@ -3,7 +3,7 @@ from gettext import gettext as _
 from typing import Dict
 
 from blueman.main.Config import Config
-from blueman.bluez.NetworkServer import NetworkServer
+from blueman.bluez import NetworkServer
 from blueman.main.DBusProxies import Mechanism
 
 from blueman.plugins.AppletPlugin import AppletPlugin

@@ -5,7 +5,7 @@ from gi.repository import Gtk, Gdk
 import logging
 from blueman.Functions import create_menuitem
 from blueman.Sdp import ServiceUUID
-from blueman.bluez.errors import BluezDBusException
+from blueman.bluez import BluezDBusException
 
 from blueman.plugins.ManagerPlugin import ManagerPlugin
 

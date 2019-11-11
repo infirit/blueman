@@ -2,9 +2,7 @@
 from typing import Optional, Callable
 
 from blueman.Service import Service
-from blueman.bluez.Device import Device
-from blueman.bluez.Network import Network
-from blueman.bluez.errors import BluezDBusException
+from blueman.bluez import Device, Network, BluezDBusException
 
 
 class NetworkService(Service):

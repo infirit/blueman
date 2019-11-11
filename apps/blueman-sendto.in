@@ -20,8 +20,7 @@ if 'BLUEMAN_SOURCE' in os.environ:
 from blueman.Functions import setup_icon_path, check_bluetooth_status, set_proc_title, create_parser, create_logger
 from blueman.main.Config import Config
 from blueman.main.Sendto import Sender
-from blueman.bluez.Manager import Manager
-from blueman.bluez.errors import DBusNoSuchAdapterError
+from blueman.bluez import Manager, DBusNoSuchAdapterError
 from blueman.gui.DeviceSelectorDialog import DeviceSelectorDialog
 
 # Workaround introspection bug, gnome bug 622084

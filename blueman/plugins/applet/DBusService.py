@@ -3,7 +3,7 @@ from gettext import gettext as _
 
 from blueman.main.PluginManager import StopException
 from blueman.plugins.AppletPlugin import AppletPlugin
-from blueman.bluez.Device import Device
+from blueman.bluez import Device
 from blueman.services.Functions import get_service
 
 import logging

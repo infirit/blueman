@@ -2,7 +2,7 @@
 from gettext import gettext as _
 
 import cairo
-from blueman.bluez.Network import Network
+from blueman.bluez import Network
 from blueman.plugins.ManagerPlugin import ManagerPlugin
 from blueman.Functions import create_menuitem
 from blueman.main.DBusProxies import AppletService
