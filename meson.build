@@ -98,14 +98,16 @@ install_subdir(
 
 install_subdir(
     'data/icons/hicolor',
-    install_dir: join_paths([datadir, 'icons'])
+    install_dir: join_paths([datadir, 'icons']),
+    exlude_files: exclude_build_files
 )
 
 
 # GtkBuilder UI files
 install_subdir(
     'data/ui',
-    install_dir: pkgdatadir
+    install_dir: pkgdatadir,
+    exlude_files: exclude_build_files
 )
 
 
