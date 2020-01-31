@@ -88,39 +88,12 @@ foreach binapp: binapps
 endforeach
 
 # Install all the artwork and icons
-# FIXME use strip_directory when meson 0.45.0 is mainstream
-install_data(
-    'data/icons/pixmaps/blueman-lq-10.png',
-    'data/icons/pixmaps/blueman-lq-20.png',
-    'data/icons/pixmaps/blueman-lq-30.png',
-    'data/icons/pixmaps/blueman-lq-40.png',
-    'data/icons/pixmaps/blueman-lq-50.png',
-    'data/icons/pixmaps/blueman-lq-60.png',
-    'data/icons/pixmaps/blueman-lq-70.png',
-    'data/icons/pixmaps/blueman-lq-80.png',
-    'data/icons/pixmaps/blueman-lq-90.png',
-    'data/icons/pixmaps/blueman-lq-100.png',
-    'data/icons/pixmaps/blueman-rssi-10.png',
-    'data/icons/pixmaps/blueman-rssi-20.png',
-    'data/icons/pixmaps/blueman-rssi-30.png',
-    'data/icons/pixmaps/blueman-rssi-40.png',
-    'data/icons/pixmaps/blueman-rssi-50.png',
-    'data/icons/pixmaps/blueman-rssi-60.png',
-    'data/icons/pixmaps/blueman-rssi-70.png',
-    'data/icons/pixmaps/blueman-rssi-80.png',
-    'data/icons/pixmaps/blueman-rssi-90.png',
-    'data/icons/pixmaps/blueman-rssi-100.png',
-    'data/icons/pixmaps/blueman-tpl-10.png',
-    'data/icons/pixmaps/blueman-tpl-20.png',
-    'data/icons/pixmaps/blueman-tpl-30.png',
-    'data/icons/pixmaps/blueman-tpl-40.png',
-    'data/icons/pixmaps/blueman-tpl-50.png',
-    'data/icons/pixmaps/blueman-tpl-60.png',
-    'data/icons/pixmaps/blueman-tpl-70.png',
-    'data/icons/pixmaps/blueman-tpl-80.png',
-    'data/icons/pixmaps/blueman-tpl-90.png',
-    'data/icons/pixmaps/blueman-tpl-100.png',
-    install_dir: join_paths([datadir, 'pixmaps', package_name])
+exclude_build_files = ['Makefile.am']
+install_subdir(
+    'data/icons/pixmaps',
+    install_dir: join_paths([datadir, 'pixmaps', package_name]),
+    strip_directory: true,
+    exlude_files: exclude_build_files
 )
 
 install_subdir(
