@@ -2,22 +2,18 @@ project(
     'blueman', 'c',
     version: '2.2-alpha',
     license: 'GPL3',
-    meson_version: '>=0.48.0',
+    meson_version: '>=0.50.0',
     default_options: 'b_lundef=false'
 )
 
 package_name = 'blueman'
 
 # Import needed modules
-python = import('python3')
+python = import('python')
 gnome = import('gnome')
 i18n = import('i18n')
 
-pyprog = python.find_python()
-# Make sure Python is installed and found
-if not pyprog.found()
-    error('No valid python3 binary found')
-endif
+pyinstall = python.find_installation(get_option('python'))
 
 # Setup all directories we install in
 prefix = get_option('prefix')
@@ -26,7 +22,7 @@ pkgdatadir = join_paths([prefix, get_option('datadir'), package_name])
 bindir = join_paths([prefix, get_option('bindir')])
 libexecdir = join_paths([prefix, get_option('libexecdir')])
 schemadir = join_paths([datadir, 'glib-2.0', 'schemas'])
-pythondir = join_paths([prefix, python.sysconfig_path('purelib')])
+pythondir = join_paths([prefix, pyinstall.get_path('purelib')])
 
 if get_option('policykit')
     have_polkit = 'yes'
@@ -47,10 +43,11 @@ conf_data.set('icondir', join_paths(datadir, 'icons'))
 conf_data.set('dhconfig', get_option('dhcp-config-path'))
 conf_data.set('have_polkit', have_polkit)
 conf_data.set('GETTEXT_PACKAGE', package_name)
-conf_data.set('PYTHON', pyprog.path())
+conf_data.set('PYTHON', pyinstall.path())
 
 # Check for build dependencies
-pythonlib = dependency('python-' + python.language_version(), required: true)
+# do not get dependency from python instalations, see meson bug #6792
+pythonlib = dependency('python-' + pyinstall.language_version(), required: true)
 pygobject = dependency('pygobject-3.0', required: true)
 bluez = dependency('bluez', version: '>= 5.0', required: true)
 gthread = dependency('gthread-2.0', version: '>= 2.32', required: true)
