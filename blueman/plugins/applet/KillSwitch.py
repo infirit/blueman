@@ -50,6 +50,7 @@ class KillSwitch(AppletPlugin, PowerStateHandler, StatusIconVisibilityHandler):
 
     _switches: Dict[int, Switch] = {}
     _iom = None
+    _fd = None
     _enabled = True
     _hardblocked = False
 
@@ -58,19 +59,17 @@ class KillSwitch(AppletPlugin, PowerStateHandler, StatusIconVisibilityHandler):
         self._connman_watch_id = Gio.bus_watch_name(Gio.BusType.SYSTEM, "net.connman", Gio.BusNameWatcherFlags.NONE,
                                                     self._on_connman_appeared, self._on_connman_vanished)
 
-        channel = GLib.IOChannel.new_file("/dev/rfkill", "r")
-        if channel is None:
-            raise ImportError('Could not access RF kill switch')
+        self._fd = os.open('/dev/rfkill', os.O_RDONLY | os.O_NONBLOCK)
 
-        channel.set_encoding(None)
-
-        self._iom = GLib.io_add_watch(channel, GLib.IO_IN | GLib.IO_ERR | GLib.IO_HUP, self.io_event)
+        self._iom = GLib.io_add_watch(self._fd, GLib.IO_IN | GLib.IO_ERR | GLib.IO_HUP, self.io_event)
 
     def on_unload(self) -> None:
         Gio.bus_unwatch_name(self._connman_watch_id)
         self._connman_proxy = None
         if self._iom:
             GLib.source_remove(self._iom)
+        if self._fd:
+            os.close(self._fd)
 
     def _on_connman_appeared(self, connection: Gio.DBusConnection, name: str, owner: str) -> None:
         logging.info(f"{name} appeared")
@@ -87,11 +86,11 @@ class KillSwitch(AppletPlugin, PowerStateHandler, StatusIconVisibilityHandler):
         logging.info(f"{name} vanished")
         self._connman_proxy = None
 
-    def io_event(self, channel: GLib.IOChannel, condition: GLib.IOCondition) -> bool:
+    def io_event(self, _, condition):
         if condition & GLib.IO_ERR or condition & GLib.IO_HUP:
             return False
 
-        data = channel.read(RFKILL_EVENT_SIZE_V1)
+        data = os.read(self._fd, RFKILL_EVENT_SIZE_V1)
         if len(data) != RFKILL_EVENT_SIZE_V1:
             logging.warning("Bad rfkill event size")
             return True
