@@ -20,6 +20,7 @@ from time import sleep
 from typing import Optional, Dict, Tuple, List, Callable, Iterable, Union, Any
 import re
 import os
+import pathlib
 import sys
 import errno
 from gettext import gettext as _
@@ -49,7 +50,7 @@ from gi.repository import Gio
 
 __all__ = ["check_bluetooth_status", "launch", "setup_icon_path", "adapter_path_to_name", "e_", "bmexit",
            "format_bytes", "create_menuitem", "have", "set_proc_title", "create_logger", "create_parser", "open_rfcomm",
-           "get_local_interfaces"]
+           "get_local_interfaces", "plugin_names"]
 
 
 def check_bluetooth_status(message: str, exitfunc: Callable[[], Any]) -> None:
@@ -334,3 +335,15 @@ def get_local_interfaces() -> Dict[str, Tuple[str, Optional[str]]]:
 
 def bmexit(msg: Optional[Union[str, int]] = None) -> None:
     raise SystemExit(msg)
+
+
+def plugin_names(path: pathlib.Path) -> List[str]:
+    plugins: List[str] = []
+    if not path.exists():
+        return plugins
+
+    for p in path.parent.glob("*.py"):
+        if p.name == "__init__.py":
+            continue
+        plugins.append(p.stem)
+    return plugins

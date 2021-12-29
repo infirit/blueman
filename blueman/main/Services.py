@@ -1,8 +1,10 @@
-import os
+from gettext import gettext as _
+import pathlib
 import logging
 import importlib
 import signal
-from typing import Optional
+from typing import List, Optional
+from blueman.Functions import plugin_names
 
 from blueman.main.Builder import Builder
 import blueman.plugins.services
@@ -65,12 +67,9 @@ class BluemanServices(Gtk.Application):
         self.b_apply.props.sensitive = show_apply
 
     def load_plugins(self) -> None:
-        path = os.path.dirname(blueman.plugins.services.__file__)
-        plugins = []
-        for root, dirs, files in os.walk(path):
-            for f in files:
-                if f.endswith(".py") and not (f.endswith(".pyc") or f.endswith("_.py")):
-                    plugins.append(f[0:-3])
+        path = pathlib.Path(blueman.plugins.services.__file__)
+        plugins = plugin_names(path)
+
         plugins.sort()
         logging.info(plugins)
         for plugin in plugins:
