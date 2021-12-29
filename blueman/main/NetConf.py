@@ -1,5 +1,6 @@
 import errno
 import os
+import pathlib
 import ipaddress
 import socket
 from tempfile import mkstemp
@@ -21,10 +22,11 @@ class NetworkSetupError(Exception):
 
 
 def _is_running(name: str, pid: int) -> bool:
-    if not os.path.exists(f"/proc/{pid}"):
+    path = pathlib.Path(f"/proc/{pid}")
+    if not path.exists():
         return False
 
-    with open(f"/proc/{pid}/cmdline") as f:
+    with path.joinpath("cmdline").open() as f:
         return name in f.readline().replace("\0", " ")
 
 
@@ -148,7 +150,7 @@ class DhcpdHandler(DHCPHandler):
         existing_subnet = ''
         start = end = False
 
-        with open(DHCP_CONFIG_FILE) as f:
+        with DHCP_CONFIG_FILE.open() as f:
             for line in f:
                 if line == '#### BLUEMAN AUTOMAGIC SUBNET ####\n':
                     start = True
@@ -355,6 +357,6 @@ class NetConf:
         except OSError:
             pass
 
-    @classmethod
-    def locked(cls, key: str) -> bool:
-        return os.path.exists(f"{cls._RUN_PATH}/blueman-{key}")
+    @staticmethod
+    def locked(key: str) -> bool:
+        return pathlib.Path(f"/var/run/blueman-{key}").exists()

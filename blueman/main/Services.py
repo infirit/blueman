@@ -1,9 +1,8 @@
-from gettext import gettext as _
 import pathlib
 import logging
 import importlib
 import signal
-from typing import List, Optional
+from typing import Optional
 from blueman.Functions import plugin_names
 
 from blueman.main.Builder import Builder

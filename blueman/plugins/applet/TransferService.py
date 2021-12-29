@@ -1,9 +1,8 @@
 from datetime import datetime
 from gettext import gettext as _, ngettext
-import os
-import shutil
 import logging
 from html import escape
+from pathlib import Path
 from typing import List, Dict, TYPE_CHECKING, Callable, Tuple, Optional, Union
 
 from blueman.bluez.obex.AgentManager import AgentManager
@@ -22,7 +21,7 @@ if TYPE_CHECKING:
     from typing_extensions import TypedDict
 
     class TransferDict(TypedDict):
-        path: str
+        path: Path
         size: Optional[int]
         name: str
 
@@ -81,12 +80,12 @@ class Agent(DbusService):
             if action == "accept":
                 assert self._pending_transfer
                 self.transfers[self._pending_transfer['transfer_path']] = {
-                    'path': self._pending_transfer['root'] + '/' + os.path.basename(self._pending_transfer['filename']),
+                    'path': Path(self._pending_transfer['root'], self._pending_transfer['filename']),
                     'size': self._pending_transfer['size'],
                     'name': self._pending_transfer['name']
                 }
 
-                ok(self.transfers[self._pending_transfer['transfer_path']]['path'])
+                ok(self.transfers[self._pending_transfer['transfer_path']]['path'].as_posix())
 
                 self._allowed_devices.append(self._pending_transfer['address'])
 
@@ -192,27 +191,29 @@ class TransferService(AppletPlugin):
 
         self._unregister_agent()
 
-    def _make_share_path(self) -> Tuple[str, bool]:
+    def _make_share_path(self) -> Tuple[Path, bool]:
         config_path = self._config["shared-path"]
-        default_path = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
-        path = None
+        xdg_download_path = GLib.get_user_special_dir(GLib.UserDirectory.DIRECTORY_DOWNLOAD)
         error = False
 
-        if config_path == '':
+        if xdg_download_path is None:
+            default_path = Path.home()
+            logging.warning(f"Failed to get Download dir from XDG, using {default_path}")
+        else:
+            default_path = Path(xdg_download_path)
+
+        shared_path = Path(config_path)
+        if shared_path.name == '':
             path = default_path
-        elif not os.path.isdir(config_path):
+        elif not shared_path.is_dir():
             path = default_path
             error = True
-            logging.warning(f"Invalid shared-path {config_path}")
+            logging.warning(f"Invalid shared-path {shared_path}")
         else:
-            path = config_path
-
-        if not path:
-            path = os.path.expanduser("~")
-            logging.warning('Failed to get Download dir from XDG')
+            path = shared_path
 
         # We used to always store the full path which caused problems
-        if config_path == default_path:
+        if shared_path == default_path:
             logging.info('Reset stored path, identical to default path.')
             self._config["shared-path"] = ''
 
@@ -282,18 +283,18 @@ class TransferService(AppletPlugin):
 
         attributes = self._agent.transfers[transfer_path]
 
-        src = attributes['path']
+        src = Path(attributes['path'])
         dest_dir, ignored = self._make_share_path()
-        filename = os.path.basename(src)
+        filename = src.name
 
-        dest = os.path.join(dest_dir, filename)
-        if os.path.exists(dest):
+        if dest_dir.joinpath(filename).exists():
             now = datetime.now()
             filename = f"{now.strftime('%Y%m%d%H%M%S')}_{filename}"
             logging.info(f"Destination file exists, renaming to: {filename}")
 
+        dest = dest_dir.joinpath(filename)
         try:
-            shutil.move(src, dest)
+            src.rename(dest)
         except (OSError, PermissionError):
             logging.error("Failed to move files", exc_info=True)
             success = False
@@ -304,7 +305,7 @@ class TransferService(AppletPlugin):
                                                   "0": "<b>" + escape(filename) + "</b>",
                                                   "1": "<b>" + escape(attributes['name']) + "</b>"},
                                               icon_name="blueman")
-            self._add_open(self._notification, _("Open"), dest)
+            self._add_open(self._notification, _("Open"), dest.as_posix())
             self._notification.show()
         elif not success:
             n = Notification(
@@ -335,7 +336,7 @@ class TransferService(AppletPlugin):
                                                        self._silent_transfers) % {"files": self._silent_transfers},
                                               icon_name="blueman")
 
-            self._add_open(self._notification, _("Open Location"), share_path)
+            self._add_open(self._notification, _("Open Location"), share_path.as_posix())
             self._notification.show()
         else:
             self._notification = Notification(_("Files received"),
@@ -343,5 +344,5 @@ class TransferService(AppletPlugin):
                                                        "Received %(files)d more files in the background",
                                                        self._silent_transfers) % {"files": self._silent_transfers},
                                               icon_name="blueman")
-            self._add_open(self._notification, _("Open Location"), share_path)
+            self._add_open(self._notification, _("Open Location"), share_path.as_posix())
             self._notification.show()
