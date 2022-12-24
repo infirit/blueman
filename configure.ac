@@ -50,6 +50,7 @@ AC_CHECK_PROGS([NETWORKTOOLS],[ifconfig ip],[no])
 if test "x$NETWORKTOOLS" = "xno"; then
 AC_MSG_ERROR([ifconfig or ip not found, install net-tools or iproute2])
 fi
+PKG_CHECK_MODULES([GTK3], [gtk+-3.0 >= 3.24.0])
 fi
 
 PKG_CHECK_MODULES([PYGOBJECT],[pygobject-3.0 >= 3.27.2])
