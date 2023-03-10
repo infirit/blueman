@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: blueman 2.4-alpha\n"
 "Report-Msgid-Bugs-To: https://github.com/blueman-project/blueman/issues\n"
-"POT-Creation-Date: 2023-02-26 18:15+0000\n"
+"POT-Creation-Date: 2023-03-10 00:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -596,72 +596,81 @@ msgstr ""
 msgid "Uncategorized"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:527
+#. https://github.com/python/mypy/issues/2608
+#: blueman/gui/manager/ManagerDeviceList.py:524
+#: blueman/plugins/applet/AutoConnect.py:50
+#: blueman/plugins/applet/ConnectionNotifier.py:36
+#: blueman/plugins/applet/RecentConns.py:155
+#: blueman/plugins/applet/PPPSupport.py:77
+msgid "Connected"
+msgstr ""
+
+#: blueman/gui/manager/ManagerDeviceList.py:526
 msgid "Trusted"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:529
+#: blueman/gui/manager/ManagerDeviceList.py:528
 msgid "Paired"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:531
+#: blueman/gui/manager/ManagerDeviceList.py:530
 msgid "Blocked"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:553
+#: blueman/gui/manager/ManagerDeviceList.py:552
 msgid "<b>Connected</b>"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:567
+#: blueman/gui/manager/ManagerDeviceList.py:566
 msgid "Poor"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:569
-#: blueman/gui/manager/ManagerDeviceList.py:588
+#: blueman/gui/manager/ManagerDeviceList.py:568
+#: blueman/gui/manager/ManagerDeviceList.py:587
 msgid "Sub-optimal"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:571
-#: blueman/gui/manager/ManagerDeviceList.py:590
+#: blueman/gui/manager/ManagerDeviceList.py:570
+#: blueman/gui/manager/ManagerDeviceList.py:589
 msgid "Optimal"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:573
+#: blueman/gui/manager/ManagerDeviceList.py:572
 msgid "Much"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:575
+#: blueman/gui/manager/ManagerDeviceList.py:574
 msgid "Too much"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:578
+#: blueman/gui/manager/ManagerDeviceList.py:577
 #, python-format
 msgid "<b>Received Signal Strength: %(rssi)u%%</b> <i>(%(rssi_state)s)</i>"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:581
+#: blueman/gui/manager/ManagerDeviceList.py:580
 #, python-format
 msgid "Received Signal Strength: %(rssi)u%% <i>(%(rssi_state)s)</i>"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:586
+#: blueman/gui/manager/ManagerDeviceList.py:585
 msgid "Low"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:592
+#: blueman/gui/manager/ManagerDeviceList.py:591
 msgid "High"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:594
+#: blueman/gui/manager/ManagerDeviceList.py:593
 msgid "Very High"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:597
+#: blueman/gui/manager/ManagerDeviceList.py:596
 #, python-format
 msgid "<b>Transmit Power Level: %(tpl)u%%</b> <i>(%(tpl_state)s)</i>"
 msgstr ""
 
-#: blueman/gui/manager/ManagerDeviceList.py:600
+#: blueman/gui/manager/ManagerDeviceList.py:599
 #, python-format
 msgid "Transmit Power Level: %(tpl)u%% <i>(%(tpl_state)s)</i>"
 msgstr ""
@@ -2042,14 +2051,6 @@ msgstr ""
 #: blueman/plugins/applet/AutoConnect.py:20
 msgid ""
 "Tries to auto-connect to configurable services on start and every 60 seconds."
-msgstr ""
-
-#. https://github.com/python/mypy/issues/2608
-#: blueman/plugins/applet/AutoConnect.py:50
-#: blueman/plugins/applet/ConnectionNotifier.py:36
-#: blueman/plugins/applet/RecentConns.py:155
-#: blueman/plugins/applet/PPPSupport.py:77
-msgid "Connected"
 msgstr ""
 
 #: blueman/plugins/applet/AutoConnect.py:50
