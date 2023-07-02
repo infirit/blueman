@@ -49,15 +49,14 @@ class MenuItemsProvider:
         return []
 
 
-class ManagerDeviceMenu(Gtk.Menu):
+class ManagerDeviceMenu:
     __ops__: Dict[str, str] = {}
     __instances__: List["ManagerDeviceMenu"] = []
 
     SelectedDevice: Device
 
     def __init__(self, blueman: "Blueman") -> None:
-        super().__init__()
-        self.set_name("ManagerDeviceMenu")
+        self._menu = Gtk.Menu(name="ManagerDeviceMenu")
         self.Blueman = blueman
 
         self.is_popup = False
@@ -83,24 +82,41 @@ class ManagerDeviceMenu(Gtk.Menu):
     def __del__(self) -> None:
         logging.debug("deleting devicemenu")
 
+    @property
+    def gtkmenu(self) -> Gtk.Menu:
+        return self._menu
+
+    @property
+    def visible(self) -> bool:
+        return self._menu.get_visible()
+
+    def append(self, item: Gtk.MenuItem) -> None:
+        self._menu.append(item)
+
     def popup_at_pointer(self, event: Optional[Gdk.Event]) -> None:
         self.is_popup = True
         self.generate()
 
-        super().popup_at_pointer(event)
+        self._menu.popup_at_pointer(event)
+
+    def popup_at_rect(self, window: Gdk.Window, rect: Gdk.Rectangle) -> None:
+        self._menu.popup_at_rect(window, rect, Gdk.Gravity.CENTER, Gdk.Gravity.NORTH)
+
+    def get_toplevel(self) -> Gtk.Widget:
+        return self._menu.get_toplevel()
 
     def clear(self) -> None:
         def remove_and_destroy(child: Gtk.Widget) -> None:
-            self.remove(child)
+            self._menu.remove(child)
             child.destroy()
 
-        self.foreach(remove_and_destroy)
+        self._menu.foreach(remove_and_destroy)
 
     def set_op(self, device: Device, message: str) -> None:
         ManagerDeviceMenu.__ops__[device.get_object_path()] = message
         for inst in ManagerDeviceMenu.__instances__:
             logging.info(f"op: regenerating instance {inst}")
-            if inst.SelectedDevice == self.SelectedDevice and not (inst.is_popup and not inst.props.visible):
+            if inst.SelectedDevice == self.SelectedDevice and not (inst.is_popup and not inst.visible):
                 inst.generate()
 
     def get_op(self, device: Device) -> Optional[str]:
@@ -113,7 +129,7 @@ class ManagerDeviceMenu(Gtk.Menu):
         del ManagerDeviceMenu.__ops__[device.get_object_path()]
         for inst in ManagerDeviceMenu.__instances__:
             logging.info(f"op: regenerating instance {inst}")
-            if inst.SelectedDevice == self.SelectedDevice and not (inst.is_popup and not inst.props.visible):
+            if inst.SelectedDevice == self.SelectedDevice and not (inst.is_popup and not inst.visible):
                 inst.generate()
 
     def _on_service_property_changed(self, _service: Union[AnyNetwork, AnyDevice], key: str, _value: object,
@@ -244,7 +260,7 @@ class ManagerDeviceMenu(Gtk.Menu):
     def generate(self) -> None:
         self.clear()
 
-        if not self.is_popup or self.props.visible:
+        if not self.is_popup or self.visible:
             selected = self.Blueman.List.selected()
             if not selected:
                 return

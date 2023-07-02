@@ -204,7 +204,7 @@ class ManagerDeviceList(DeviceList):
         selected = self.selected()
         assert selected is not None
         rect = self.get_cell_area(self.liststore.get_path(selected), self.get_column(1))
-        self.menu.popup_at_rect(window, rect, Gdk.Gravity.CENTER, Gdk.Gravity.NORTH)
+        self.menu.popup_at_rect(window, rect)
 
         return True
 

@@ -140,7 +140,7 @@ class ManagerMenu:
 
             if self.device_menu is None:
                 self.device_menu = ManagerDeviceMenu(self.blueman)
-                self.item_device.set_submenu(self.device_menu)
+                self.item_device.set_submenu(self.device_menu.gtkmenu)
             else:
                 def idle() -> bool:
                     assert self.device_menu is not None  # https://github.com/python/mypy/issues/2608
