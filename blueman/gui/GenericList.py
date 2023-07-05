@@ -146,19 +146,13 @@ class GenericList(GObject.Object):
         vals = self._add(**columns)
         return self.liststore.prepend(vals)
 
-    def get_conditional(self, **cols: object) -> List[int]:
+    def get_conditional(self, **cols: object) -> List[Gtk.TreeIter]:
         ret = []
-        matches = 0
-        for i in range(len(self.liststore)):
-            row = self.get(i)
-            for k, v in cols.items():
-                if row[k] == v:
-                    matches += 1
-
-            if matches == len(cols):
-                ret.append(i)
-
-            matches = 0
+        for tree_row in self.liststore:
+            row_data = self.get(tree_row.iter)
+            for key in cols:
+                if row_data[key] == cols[key]:
+                    ret.append(tree_row.iter)
 
         return ret
 
