@@ -3,6 +3,8 @@ from typing import Dict, Optional, TYPE_CHECKING, Iterable, Mapping, Callable, T
 import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
+from gi.repository import Gdk
+from gi.repository import GObject
 
 
 if TYPE_CHECKING:
@@ -23,11 +25,11 @@ else:
 
 
 # noinspection PyAttributeOutsideInit
-class GenericList(Gtk.TreeView):
+class GenericList(GObject.Object):
     def __init__(self, data: Iterable[ListDataDict], headers_visible: bool = True, visible: bool = False) -> None:
-        super().__init__(headers_visible=headers_visible, visible=visible)
-        self.set_name("GenericList")
-        self.selection = self.get_selection()
+        super().__init__()
+        self._view = Gtk.TreeView(headers_visible=headers_visible, visible=visible)
+        self.selection = self._view.get_selection()
         self._load(data)
 
     def _load(self, data: Iterable[ListDataDict]) -> None:
@@ -38,7 +40,7 @@ class GenericList(Gtk.TreeView):
 
         self.liststore = Gtk.ListStore(*types)
         self.filter = self.liststore.filter_new()
-        self.set_model(self.filter)
+        self._view.set_model(self.filter)
 
         for i, row in enumerate(data):
             self.ids[row["id"]] = i
@@ -59,6 +61,49 @@ class GenericList(Gtk.TreeView):
 
             self.columns[row["id"]] = column
             self.append_column(column)
+
+    def append_column(self, column: Gtk.TreeViewColumn) -> None:
+        self._view.append_column(column)
+
+    def set_headers_visible(self, visible: bool) -> None:
+        self._view.set_headers_visible(visible)
+
+    def set_has_tooltip(self, has_tooltip: bool) -> None:
+        self._view.set_has_tooltip(has_tooltip)
+
+    def get_pointer(self) -> Tuple[int, int]:
+        return self._view.get_pointer()
+
+    def get_cursor(self) -> Tuple[Optional[Gtk.TreePath], Optional[Gtk.TreeViewColumn]]:
+        return self._view.get_cursor()
+
+    def get_window(self) -> Optional[Gdk.Window]:
+        return self._view.get_window()
+
+    def set_cursor(self, path: Gtk.TreePath) -> None:
+        self._view.set_cursor(path)
+
+    def show(self) -> None:
+        self._view.show()
+
+    def get_path_at_pos(self, x: int, y: int) -> Optional[Tuple[Optional[Gtk.TreePath], Optional[Gtk.TreeViewColumn], int, int]]:
+        return self._view.get_path_at_pos(x, y)
+
+    def get_scale_factor(self) -> int:
+        return self._view.get_scale_factor()
+
+    def get_cell_area(self, path: Optional[Gtk.TreePath], column: Optional[Gtk.TreeViewColumn]) -> Gdk.Rectangle:
+        return self._view.get_cell_area(path, column)
+
+    def get_column(self, n: int) -> Optional[Gtk.TreeViewColumn]:
+        return self._view.get_column(n)
+
+    def destroy(self) -> None:
+        self._view.destroy()
+
+    @property
+    def view(self) -> Gtk.TreeView:
+        return self._view
 
     def selected(self) -> Optional[Gtk.TreeIter]:
         model, tree_iter = self.selection.get_selected()

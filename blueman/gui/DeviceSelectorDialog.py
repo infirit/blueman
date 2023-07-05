@@ -32,7 +32,7 @@ class DeviceSelectorDialog(Gtk.Dialog):
         if discover:
             self.selector.List.discover_devices()
 
-        self.selector.List.connect("row-activated", self.on_row_activated)
+        self.selector.List.view.connect("row-activated", self.on_row_activated)
 
     def close(self) -> None:
         self.selector.destroy()

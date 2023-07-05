@@ -26,7 +26,7 @@ class DeviceSelectorWidget(Gtk.Box):
         sw = Gtk.ScrolledWindow(hscrollbar_policy=Gtk.PolicyType.NEVER,
                                 vscrollbar_policy=Gtk.PolicyType.AUTOMATIC,
                                 shadow_type=Gtk.ShadowType.IN)
-        sw.add(self.List)
+        sw.add(self.List.view)
         self.pack_start(sw, True, True, 0)
 
         # Disable overlay scrolling
@@ -108,12 +108,12 @@ class DeviceSelectorWidget(Gtk.Box):
         num = len(adapters)
         if num == 0:
             self.cb_adapters.props.visible = False
-            self.List.props.sensitive = False
+            self.List.view.props.sensitive = False
         elif num == 1:
             self.cb_adapters.props.visible = False
-            self.List.props.sensitive = True
+            self.List.view.props.sensitive = True
         elif num > 1:
-            self.List.props.sensitive = True
+            self.List.view.props.sensitive = True
             self.cb_adapters.props.visible = True
             for adapter in adapters:
                 tree_iter = model.append([adapter.get_name(), adapter.get_object_path()])

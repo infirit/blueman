@@ -148,7 +148,7 @@ class PluginDialog(Gtk.ApplicationWindow):
 
         plugin_list = builder.get_widget("plugin_list", Gtk.ScrolledWindow)
         plugin_info = builder.get_widget("main_scrolled_window", Gtk.ScrolledWindow)
-        plugin_list.add(self.list)
+        plugin_list.add(self.list.view)
 
         # Disable overlay scrolling
         if Gtk.get_minor_version() >= 16:

@@ -71,7 +71,7 @@ class BluemanServices(Gtk.Application):
 
             ls.selection.connect("changed", self.on_selection_changed)
 
-            self.viewport.add(ls)
+            self.viewport.add(ls.view)
 
             self.load_plugins()
 

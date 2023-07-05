@@ -156,7 +156,7 @@ class Blueman(Gtk.Application):
                 self.List = ManagerDeviceList(adapter=self.Config["last-adapter"], inst=self)
 
                 self.List.show()
-                sw.add(self.List)
+                sw.add(self.List.view)
 
                 self.Toolbar = ManagerToolbar(self)
                 self.Menu = ManagerMenu(self)
