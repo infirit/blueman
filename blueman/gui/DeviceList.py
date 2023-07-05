@@ -76,7 +76,6 @@ class DeviceList(GenericList):
         ]
 
         super().__init__(data, headers_visible=headers_visible)
-        self.set_name("DeviceList")
 
         self.set_adapter(adapter_name)
         self._any_adapter = AnyAdapter()

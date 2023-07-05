@@ -65,10 +65,8 @@ class ManagerDeviceList(DeviceList):
             {"id": "initial_anim", "type": bool},
             {"id": "blocked", "type": bool}
         ]
-        super().__init__(adapter, tabledata)
-        self.set_name("ManagerDeviceList")
-        self.set_headers_visible(False)
-        self.props.has_tooltip = True
+        super().__init__(adapter, tabledata, headers_visible=False)
+        self.set_has_tooltip(True)
         self.Blueman = inst
 
         self._monitored_devices: Set[str] = set()
@@ -83,23 +81,23 @@ class ManagerDeviceList(DeviceList):
         self._on_settings_changed(self.Config, "sort-by")
         self._on_settings_changed(self.Config, "sort-type")
 
-        self.connect("query-tooltip", self.tooltip_query)
+        self.view.connect("query-tooltip", self.tooltip_query)
         self.tooltip_row: Optional[Gtk.TreePath] = None
         self.tooltip_col: Optional[Gtk.TreeViewColumn] = None
 
-        self.connect("popup-menu", self._on_popup_menu)
-        self.connect("button_press_event", self.on_event_clicked)
-        self.connect("button_release_event", self.on_event_clicked)
+        self.view.connect("popup-menu", self._on_popup_menu)
+        self.view.connect("button_press_event", self.on_event_clicked)
+        self.view.connect("button_release_event", self.on_event_clicked)
 
         self.menu: Optional[ManagerDeviceMenu] = None
 
-        self.connect("drag_data_received", self.drag_recv)
-        self.connect("drag-motion", self.drag_motion)
+        self.view.connect("drag_data_received", self.drag_recv)
+        self.view.connect("drag-motion", self.drag_motion)
 
-        Gtk.Widget.drag_dest_set(self, Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY | Gdk.DragAction.DEFAULT)
-        Gtk.Widget.drag_dest_add_uri_targets(self)
+        Gtk.Widget.drag_dest_set(self.view, Gtk.DestDefaults.ALL, [], Gdk.DragAction.COPY | Gdk.DragAction.DEFAULT)
+        Gtk.Widget.drag_dest_add_uri_targets(self.view)
 
-        self.set_search_equal_func(self.search_func)
+        self.view.set_search_equal_func(self.search_func)
         self.filter.set_visible_func(self.filter_func)
 
     def _on_settings_changed(self, settings: Gio.Settings, key: str) -> None:
@@ -253,8 +251,8 @@ class ManagerDeviceList(DeviceList):
 
     def _make_device_icon(self, icon_info: Gtk.IconInfo, is_paired: bool, is_connected: bool, is_trusted: bool,
                           is_blocked: bool) -> cairo.Surface:
-        window = self.get_window()
-        scale = self.get_scale_factor()
+        window = self.view.get_window()
+        scale = self.view.get_scale_factor()
         target = icon_info.load_surface(window)
         ctx = cairo.Context(target)
 
@@ -635,8 +633,8 @@ class ManagerDeviceList(DeviceList):
                                              row["connected"], row["trusted"], row["blocked"])
             cell.set_property("surface", surface)
         else:
-            window = self.get_window()
-            scale = self.get_scale_factor()
+            window = self.view.get_window()
+            scale = self.view.get_scale_factor()
             pb = self.get(tree_iter, data + "_pb")[data + "_pb"]
             if pb:
                 surface = Gdk.cairo_surface_create_from_pixbuf(pb, scale, window)

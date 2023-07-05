@@ -101,17 +101,18 @@ class AnimBase(GObject.GObject):
 
 
 class TreeRowFade(AnimBase):
-    def __init__(self, tw: "ManagerDeviceList",
+    def __init__(self, devlist: "ManagerDeviceList",
                  path: Gtk.TreePath,
                  columns: Optional[Collection[Gtk.TreeViewColumn]] = None) -> None:
         super().__init__(1.0)
-        self.tw = tw
-        assert self.tw.liststore is not None
+        self.devlist = devlist
+        self.tw = devlist.view
+        assert self.devlist.liststore is not None
 
         self.sig: Optional[int] = self.tw.connect_after("draw", self.on_draw)
 
-        self.row = Gtk.TreeRowReference.new(self.tw.liststore, path)
-        self.stylecontext = tw.get_style_context()
+        self.row = Gtk.TreeRowReference.new(self.devlist.liststore, path)
+        self.stylecontext = self.tw.get_style_context()
         self.columns = columns
 
     def unref(self) -> None:
@@ -133,7 +134,7 @@ class TreeRowFade(AnimBase):
         if path is None:
             return False
 
-        path = self.tw.filter.convert_child_path_to_path(path)
+        path = self.devlist.filter.convert_child_path_to_path(path)
         if path is None:
             return False
 
@@ -160,15 +161,15 @@ class TreeRowFade(AnimBase):
 
 
 class CellFade(AnimBase):
-    def __init__(self, tw: "ManagerDeviceList", path: Gtk.TreePath, columns: Iterable[int]) -> None:
+    def __init__(self, devlist: "ManagerDeviceList", path: Gtk.TreePath, columns: Iterable[int]) -> None:
         super().__init__(1.0)
-        self.tw = tw
-        assert self.tw.liststore is not None
+        self.tw = tw = devlist.view
+        self.devlist = devlist
+        assert self.devlist.liststore is not None
 
         self.frozen = False
         self.sig: Optional[int] = tw.connect_after("draw", self.on_draw)
-        self.row = Gtk.TreeRowReference.new(self.tw.liststore, path)
-        self.selection = tw.get_selection()
+        self.row = Gtk.TreeRowReference.new(devlist.liststore, path)
         self.columns: List[Optional[Gtk.TreeViewColumn]] = []
         for i in columns:
             self.columns.append(self.tw.get_column(i))
@@ -187,12 +188,12 @@ class CellFade(AnimBase):
                 self.tw.disconnect(self.sig)
                 self.sig = None
 
-        assert self.tw.liststore is not None
+        assert self.devlist.liststore is not None
         path = self.row.get_path()
         if path is None:
             return False
 
-        path = self.tw.filter.convert_child_path_to_path(path)
+        path = self.devlist.filter.convert_child_path_to_path(path)
         if path is None:
             return False
 
@@ -208,9 +209,9 @@ class CellFade(AnimBase):
 
         cr.clip()
 
-        maybe_selected = self.tw.selected()
+        maybe_selected = self.devlist.selected()
         if maybe_selected is not None:
-            selected = self.tw.liststore.get_path(maybe_selected) == path
+            selected = self.devlist.liststore.get_path(maybe_selected) == path
         else:
             selected = False
 
