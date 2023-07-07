@@ -268,13 +268,9 @@ class ManagerDeviceMenu:
                                         "blocked")
         else:
             (x, y) = self.Blueman.List.get_pointer()
-            posdata = self.Blueman.List.get_path_at_pos(x, y)
-            if posdata is None:
-                return
-
-            path = posdata[0]
+            path, _column = self.Blueman.List.get_path_at_pos(x, y)
             if path is None:
-                raise TypeError("Path should never be None")
+                return
 
             tree_iter = self.Blueman.List.filter.get_iter(path)
             assert tree_iter is not None

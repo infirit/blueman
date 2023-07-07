@@ -86,8 +86,12 @@ class GenericList(GObject.Object):
     def show(self) -> None:
         self._view.show()
 
-    def get_path_at_pos(self, x: int, y: int) -> Optional[Tuple[Optional[Gtk.TreePath], Optional[Gtk.TreeViewColumn], int, int]]:
-        return self._view.get_path_at_pos(x, y)
+    def get_path_at_pos(self, x: int, y: int) -> Tuple[Optional[Gtk.TreePath], Optional[Gtk.TreeViewColumn]]:
+        row_ref = self._view.get_path_at_pos(x, y)
+        if row_ref is None:
+            return None, None
+
+        return row_ref[0], row_ref[1]
 
     def get_scale_factor(self) -> int:
         return self._view.get_scale_factor()
