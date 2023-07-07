@@ -139,10 +139,6 @@ class GenericList(GObject.Object):
         vals = self._add(**columns)
         return self.liststore.append(vals)
 
-    def prepend(self, **columns: object) -> Gtk.TreeIter:
-        vals = self._add(**columns)
-        return self.liststore.prepend(vals)
-
     def get_conditional(self, **cols: object) -> List[Gtk.TreeIter]:
         ret = []
         for tree_row in self.liststore:
