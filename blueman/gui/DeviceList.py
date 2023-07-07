@@ -21,6 +21,28 @@ gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk
 
 
+class DeviceRow:
+    def __init__(self, object_path: str, tree_row_reference: Gtk.TreeRowReference):
+        self.__path = object_path
+        self.__row_reference = tree_row_reference
+
+    @property
+    def row_reference(self) -> Gtk.TreeRowReference:
+        return self.__row_reference
+
+    @property
+    def path(self) -> str:
+        return self.__path
+
+    @property
+    def valid(self) -> bool:
+        return self.__row_reference.valid()
+
+    @property
+    def tree_path(self) -> Optional[Gtk.TreePath]:
+        return self.__row_reference.get_path()
+
+
 class DeviceList(GenericList):
     __gsignals__: GSignals = {
         # @param: device TreeIter
@@ -47,7 +69,7 @@ class DeviceList(GenericList):
             tabledata = []
 
         # cache for fast lookup in the list
-        self.path_to_row: Dict[str, Gtk.TreeRowReference] = {}
+        self.path_to_row: Dict[str, DeviceRow] = {}
 
         self.manager = Manager()
         self._managerhandlers: List[int] = []
@@ -295,8 +317,8 @@ class DeviceList(GenericList):
         if row is None:
             return row
 
-        if row.valid():
-            tree_path = row.get_path()
+        if row.valid:
+            tree_path = row.tree_path
             assert tree_path is not None
             tree_iter = self.liststore.get_iter(tree_path)
             return tree_iter
@@ -321,8 +343,8 @@ class DeviceList(GenericList):
 
         if object_path:
             logging.info(f"Caching new device {object_path}")
-            self.path_to_row[object_path] = Gtk.TreeRowReference.new(self.liststore,
-                                                                     self.liststore.get_path(tree_iter))
+            row_ref = Gtk.TreeRowReference.new(self.liststore, self.liststore.get_path(tree_iter))
+            self.path_to_row[object_path] = DeviceRow(object_path, row_ref)
 
     def append(self, **columns: object) -> Gtk.TreeIter:
         tree_iter = super().append(**columns)
