@@ -320,8 +320,10 @@ class ManagerDeviceList(DeviceList):
         else:
             return get_major_class(device['Class'])
 
-    def row_setup_event(self, tree_iter: Gtk.TreeIter, device: Device) -> None:
-        if not self.get(tree_iter, "initial_anim")["initial_anim"]:
+    def row_setup_event(self, tree_iter: Gtk.TreeIter, object_path: str) -> None:
+        row_data = self.get(tree_iter, "initial_anim", "device")
+        device = row_data["device"]
+        if not row_data["initial_anim"]:
             assert self.liststore is not None
             child_path = self.liststore.get_path(tree_iter)
             result = self.filter.convert_child_path_to_path(child_path)

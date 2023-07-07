@@ -149,7 +149,7 @@ class DeviceList(GenericList):
     # ##### virtual funcs #####
 
     # called when row needs to be initialized
-    def row_setup_event(self, tree_iter: Gtk.TreeIter, device: Device) -> None:
+    def row_setup_event(self, tree_iter: Gtk.TreeIter, object_path: str) -> None:
         pass
 
     # called when a property for a device changes
@@ -231,7 +231,7 @@ class DeviceList(GenericList):
         timestamp = datetime.strftime(datetime.now(), '%Y%m%d%H%M%S%f')
         no_name = "Name" not in device
         self.set(tree_iter, device=device, dbus_path=object_path, timestamp=float(timestamp), no_name=no_name)
-        self.row_setup_event(tree_iter, device)
+        self.row_setup_event(tree_iter, object_path)
 
         if self.get_selected_device() is None:
             self.selection.select_path(Gtk.TreePath.new_first())
