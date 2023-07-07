@@ -156,9 +156,9 @@ class ManagerDeviceList(DeviceList):
 
         context.finish(True, False, time)
 
-        path = self.get_path_at_pos(x, y)
-        if path:
-            tree_iter = self.get_iter(path[0])
+        path, _column = self.get_path_at_pos(x, y)
+        if path is not None:
+            tree_iter = self.get_iter(path)
             assert tree_iter is not None
             device = self.get(tree_iter, "device")["device"]
             command = f"blueman-sendto --device={device['Address']}"
@@ -169,10 +169,8 @@ class ManagerDeviceList(DeviceList):
             context.finish(False, False, time)
 
     def drag_motion(self, _widget: Gtk.Widget, drag_context: Gdk.DragContext, x: int, y: int, timestamp: int) -> bool:
-        result = self.get_path_at_pos(x, y)
-        if result is not None:
-            path = result[0]
-            assert path is not None
+        path, _column = self.get_path_at_pos(x, y)
+        if path is not None:
             path = self.filter.convert_path_to_child_path(path)
             if path is None:
                 return False
@@ -210,12 +208,9 @@ class ManagerDeviceList(DeviceList):
         if event.type not in (Gdk.EventType._2BUTTON_PRESS, Gdk.EventType.BUTTON_PRESS):
             return False
 
-        posdata = self.get_path_at_pos(int(cast(Gdk.EventButton, event).x), int(cast(Gdk.EventButton, event).y))
-        if posdata is None:
+        path, _column = self.get_path_at_pos(int(cast(Gdk.EventButton, event).x), int(cast(Gdk.EventButton, event).y))
+        if path is None:
             return False
-        else:
-            path = posdata[0]
-            assert path is not None
 
         tree_iter = self.filter.get_iter(path)
         assert tree_iter is not None
@@ -517,17 +512,17 @@ class ManagerDeviceList(DeviceList):
         return fader
 
     def tooltip_query(self, _tw: Gtk.Widget, x: int, y: int, _kb: bool, tooltip: Gtk.Tooltip) -> bool:
-        path = self.get_path_at_pos(x, y)
-        if path is None:
+        path, column = self.get_path_at_pos(x, y)
+        if path is None or column is None:
             return False
 
-        if path[0] != self.tooltip_row or path[1] != self.tooltip_col:
-            self.tooltip_row = path[0]
-            self.tooltip_col = path[1]
+        if path != self.tooltip_row or column != self.tooltip_col:
+            self.tooltip_row = path
+            self.tooltip_col = column
             return False
 
-        if path[1] == self.columns["device_surface"]:
-            tree_iter = self.get_iter(path[0])
+        if column == self.columns["device_surface"]:
+            tree_iter = self.get_iter(path)
             assert tree_iter is not None
 
             row = self.get(tree_iter, "connected", "trusted", "paired", "blocked")
@@ -547,14 +542,14 @@ class ManagerDeviceList(DeviceList):
             else:
                 return False
 
-            self.tooltip_row = path[0]
-            self.tooltip_col = path[1]
+            self.tooltip_row = path
+            self.tooltip_col = column
             return True
 
-        elif path[1] == self.columns["battery_pb"] \
-                or path[1] == self.columns["tpl_pb"] \
-                or path[1] == self.columns["rssi_pb"]:
-            tree_iter = self.get_iter(path[0])
+        elif column == self.columns["battery_pb"] \
+                or column == self.columns["tpl_pb"] \
+                or column == self.columns["rssi_pb"]:
+            tree_iter = self.get_iter(path)
             assert tree_iter is not None
 
             dt = self.get(tree_iter, "connected")["connected"]
@@ -568,7 +563,7 @@ class ManagerDeviceList(DeviceList):
             tpl = self.get(tree_iter, "tpl")["tpl"]
 
             if battery != 0:
-                if path[1] == self.columns["battery_pb"]:
+                if column == self.columns["battery_pb"]:
                     lines.append(f"<b>Battery: {int(battery)}%</b>")
                 else:
                     lines.append(f"Battery: {int(battery)}%")
@@ -585,7 +580,7 @@ class ManagerDeviceList(DeviceList):
                 else:
                     rssi_state = _("Too much")
 
-                if path[1] == self.columns["rssi_pb"]:
+                if column == self.columns["rssi_pb"]:
                     lines.append(_("<b>Received Signal Strength: %(rssi)u%%</b> <i>(%(rssi_state)s)</i>") %
                                  {"rssi": rssi, "rssi_state": rssi_state})
                 else:
@@ -604,7 +599,7 @@ class ManagerDeviceList(DeviceList):
                 else:
                     tpl_state = _("Very High")
 
-                if path[1] == self.columns["tpl_pb"]:
+                if column == self.columns["tpl_pb"]:
                     lines.append(_("<b>Transmit Power Level: %(tpl)u%%</b> <i>(%(tpl_state)s)</i>") %
                                  {"tpl": tpl, "tpl_state": tpl_state})
                 else:
@@ -612,8 +607,8 @@ class ManagerDeviceList(DeviceList):
                                  {"tpl": tpl, "tpl_state": tpl_state})
 
             tooltip.set_markup("\n".join(lines))
-            self.tooltip_row = path[0]
-            self.tooltip_col = path[1]
+            self.tooltip_row = path
+            self.tooltip_col = column
             return True
         return False
 
