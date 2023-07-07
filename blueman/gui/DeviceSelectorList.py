@@ -33,10 +33,11 @@ class DeviceSelectorList(DeviceList):
 
     def on_icon_theme_changed(self, _icon_them: Gtk.IconTheme) -> None:
         for row in self.liststore:
-            device = self.get(row.iter, "device")["device"]
-            self.row_setup_event(row.iter, device)
+            object_path = self.get(row.iter, "dbus_path")["dbus_path"]
+            self.row_setup_event(row.iter, object_path)
 
-    def row_setup_event(self, tree_iter: Gtk.TreeIter, device: Device) -> None:
+    def row_setup_event(self, tree_iter: Gtk.TreeIter, object_path: str) -> None:
+        device = Device(obj_path=object_path)
         self.row_update_event(tree_iter, "Trusted", device['Trusted'])
         self.row_update_event(tree_iter, "Paired", device['Paired'])
         self.row_update_event(tree_iter, "Alias", device.display_name)
