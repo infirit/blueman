@@ -286,6 +286,7 @@ class DeviceList(GenericList):
     def find_device_by_path(self, object_path: str) -> Optional[Gtk.TreeIter]:
         row = self.path_to_row.get(object_path, None)
         if row is None:
+            logging.error(f"{object_path} not found in cache")
             return row
 
         if row.valid():
@@ -294,6 +295,7 @@ class DeviceList(GenericList):
             tree_iter = self.liststore.get_iter(tree_path)
             return tree_iter
         else:
+            logging.error(f"{object_path} invalid deleting from cache")
             del self.path_to_row[object_path]
             return None
 
