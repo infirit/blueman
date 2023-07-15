@@ -14,7 +14,6 @@ from blueman.gui.GenericList import ListDataDict
 from blueman.gui.manager.ManagerDeviceMenu import ManagerDeviceMenu
 from blueman.Constants import PIXMAP_PATH
 from blueman.Functions import launch
-from blueman.Sdp import ServiceUUID, OBEX_OBJPUSH_SVCLASS_ID
 from blueman.gui.GtkAnimation import TreeRowFade, CellFade, AnimBase
 from _blueman import ConnInfoReadError, conn_info
 
@@ -51,7 +50,6 @@ class ManagerDeviceList(DeviceList):
             {"id": "tpl_pb", "type": GdkPixbuf.Pixbuf, "renderer": Gtk.CellRendererPixbuf(),
              "render_attrs": {}, "view_props": {"spacing": 0},
              "celldata_func": (self._set_cell_data, "tpl")},
-            {"id": "objpush", "type": bool},  # used to set Send File button
             {"id": "battery", "type": float},
             {"id": "rssi", "type": float},
             {"id": "tpl", "type": float},
@@ -173,8 +171,8 @@ class ManagerDeviceList(DeviceList):
             if not self.selection.path_is_selected(path):
                 tree_iter = self.get_iter(path)
                 assert tree_iter is not None
-                has_obj_push = self._has_objpush(self.get(tree_iter, "device")["device"])
-                if has_obj_push:
+                device = self.get(tree_iter, "device")["device"]
+                if device.has_objpush:
                     Gdk.drag_status(drag_context, Gdk.DragAction.COPY, timestamp)
                     self.set_cursor(path)
                     return True
@@ -337,7 +335,6 @@ class ManagerDeviceList(DeviceList):
                 else:
                     self.set(tree_iter, initial_anim=False)
 
-        has_objpush = self._has_objpush(device)
         klass = get_minor_class(device['Class'])
         # Bluetooth >= 4 devices use Appearance property
         appearance = device["Appearance"]
@@ -352,7 +349,7 @@ class ManagerDeviceList(DeviceList):
         display_name = self.make_display_name(device.display_name, device["Class"], device['Address'])
         caption = self.make_caption(display_name, description, device['Address'])
 
-        self.set(tree_iter, caption=caption, icon_info=icon_info, objpush=has_objpush)
+        self.set(tree_iter, caption=caption, icon_info=icon_info)
 
         if device["Connected"]:
             self._monitor_power_levels(tree_iter, device)
@@ -405,11 +402,6 @@ class ManagerDeviceList(DeviceList):
             caption = self.make_caption(name, self.get_device_class(device), device['Address'])
 
             self.set(tree_iter, caption=caption)
-
-        elif key == "UUIDs":
-            device = self.get(tree_iter, "device")["device"]
-            has_objpush = self._has_objpush(device)
-            self.set(tree_iter, objpush=has_objpush)
 
         elif key == "Connected":
             if value:
@@ -571,15 +563,6 @@ class ManagerDeviceList(DeviceList):
             self.tooltip_row = path
             self.tooltip_col = column
             return True
-        return False
-
-    def _has_objpush(self, device: Device) -> bool:
-        if device is None:
-            return False
-
-        for uuid in device["UUIDs"]:
-            if ServiceUUID(uuid).short_uuid == OBEX_OBJPUSH_SVCLASS_ID:
-                return True
         return False
 
     def _set_cell_data(self, _col: Gtk.TreeViewColumn, cell: Gtk.CellRenderer, model: Gtk.TreeModelFilter,

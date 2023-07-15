@@ -264,7 +264,7 @@ class ManagerDeviceMenu:
             selected = self.Blueman.List.selected()
             if not selected:
                 return
-            row = self.Blueman.List.get(selected, "objpush", "device")
+            device = self.Blueman.List.get(selected, "device")["device"]
         else:
             (x, y) = self.Blueman.List.get_pointer()
             path, _column = self.Blueman.List.get_path_at_pos(x, y)
@@ -276,9 +276,9 @@ class ManagerDeviceMenu:
             child_iter = self.Blueman.List.filter.convert_iter_to_child_iter(tree_iter)
             assert child_iter is not None
 
-            row = self.Blueman.List.get(child_iter, "objpush", "device")
+            device = self.Blueman.List.get(child_iter, "device")["device"]
 
-        self.SelectedDevice = device = row["device"]
+        self.SelectedDevice = device
 
         op = self.get_op(self.SelectedDevice)
 
@@ -354,7 +354,7 @@ class ManagerDeviceMenu:
         self.append(send_item)
         send_item.show()
 
-        if row["objpush"]:
+        if device.has_objpush:
             send_item.connect("activate", lambda x: self.Blueman.send(self.SelectedDevice))
             send_item.props.sensitive = True
 

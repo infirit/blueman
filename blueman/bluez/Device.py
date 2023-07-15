@@ -3,6 +3,7 @@ from typing import Optional, Callable
 from blueman.bluez.Base import Base
 from blueman.bluez.AnyBase import AnyBase
 from blueman.bluez.errors import BluezDBusException
+from blueman.Sdp import ServiceUUID, OBEX_OBJPUSH_SVCLASS_ID
 
 
 class Device(Base):
@@ -36,6 +37,13 @@ class Device(Base):
     def display_name(self) -> str:
         alias: str = self["Alias"]
         return alias.strip()
+
+    @property
+    def has_objpush(self) -> bool:
+        for uuid in self["UUIDs"]:
+            if ServiceUUID(uuid).short_uuid == OBEX_OBJPUSH_SVCLASS_ID:
+                return True
+        return False
 
 
 class AnyDevice(AnyBase):

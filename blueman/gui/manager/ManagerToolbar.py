@@ -73,13 +73,12 @@ class ManagerToolbar:
         else:
             self.b_search.props.sensitive = True
 
-    def on_device_selected(self, dev_list: ManagerDeviceList, device: Device, tree_iter: Gtk.TreeIter) -> None:
+    def on_device_selected(self, _dev_list: ManagerDeviceList, device: Device, tree_iter: Gtk.TreeIter) -> None:
         if device is None or tree_iter is None:
             self.b_bond.props.sensitive = False
             self.b_remove.props.sensitive = False
             self.b_trust.props.sensitive = False
         else:
-            row = dev_list.get(tree_iter, "objpush")
             self.b_remove.props.sensitive = True
             if device["Paired"]:
                 self.b_bond.props.sensitive = False
@@ -98,7 +97,7 @@ class ManagerToolbar:
                 self.b_trust.props.sensitive = True
                 self.b_trust.props.label = _("Trust")
 
-            if row["objpush"]:
+            if device.has_objpush:
                 self.b_send.props.sensitive = True
             else:
                 self.b_send.props.sensitive = False
