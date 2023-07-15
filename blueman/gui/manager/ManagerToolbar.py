@@ -79,14 +79,14 @@ class ManagerToolbar:
             self.b_remove.props.sensitive = False
             self.b_trust.props.sensitive = False
         else:
-            row = dev_list.get(tree_iter, "paired", "trusted", "objpush")
+            row = dev_list.get(tree_iter, "objpush")
             self.b_remove.props.sensitive = True
-            if row["paired"]:
+            if device["Paired"]:
                 self.b_bond.props.sensitive = False
             else:
                 self.b_bond.props.sensitive = True
 
-            if row["trusted"]:
+            if device["Trusted"]:
                 image = Gtk.Image(icon_name="blueman-untrust-symbolic", pixel_size=24, visible=True)
                 self.b_trust.props.icon_widget = image
                 self.b_trust.props.sensitive = True

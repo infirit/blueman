@@ -51,10 +51,6 @@ class ManagerDeviceList(DeviceList):
             {"id": "tpl_pb", "type": GdkPixbuf.Pixbuf, "renderer": Gtk.CellRendererPixbuf(),
              "render_attrs": {}, "view_props": {"spacing": 0},
              "celldata_func": (self._set_cell_data, "tpl")},
-            {"id": "alias", "type": str},  # used for quick access instead of device.GetProperties
-            {"id": "connected", "type": bool},  # used for quick access instead of device.GetProperties
-            {"id": "paired", "type": bool},  # used for quick access instead of device.GetProperties
-            {"id": "trusted", "type": bool},  # used for quick access instead of device.GetProperties
             {"id": "objpush", "type": bool},  # used to set Send File button
             {"id": "battery", "type": float},
             {"id": "rssi", "type": float},
@@ -62,8 +58,7 @@ class ManagerDeviceList(DeviceList):
             {"id": "icon_info", "type": Gtk.IconInfo},
             {"id": "cell_fader", "type": CellFade},
             {"id": "row_fader", "type": TreeRowFade},
-            {"id": "initial_anim", "type": bool},
-            {"id": "blocked", "type": bool}
+            {"id": "initial_anim", "type": bool}
         ]
         super().__init__(adapter, tabledata, headers_visible=False)
         self.set_has_tooltip(True)
@@ -216,19 +211,19 @@ class ManagerDeviceList(DeviceList):
         assert tree_iter is not None
         child_iter = self.filter.convert_iter_to_child_iter(tree_iter)
         assert child_iter is not None
-        row = self.get(child_iter, "device", "connected")
-        if not row:
+        device = self.get(child_iter, "device")["device"]
+        if not device:
             return False
 
         if self.menu is None:
             self.menu = ManagerDeviceMenu(self.Blueman)
 
         if event.type == Gdk.EventType._2BUTTON_PRESS and cast(Gdk.EventButton, event).button == 1:
-            if self.menu.show_generic_connect_calc(row["device"]['UUIDs']):
-                if row["connected"]:
-                    self.menu.disconnect_service(row["device"])
+            if self.menu.show_generic_connect_calc(device['UUIDs']):
+                if device["Connected"]:
+                    self.menu.disconnect_service(device)
                 else:
-                    self.menu.connect_service(row["device"])
+                    self.menu.connect_service(device)
 
         if event.type == Gdk.EventType.BUTTON_PRESS and cast(Gdk.EventButton, event).button == 3:
             self.menu.popup_at_pointer(event)
@@ -357,24 +352,7 @@ class ManagerDeviceList(DeviceList):
         display_name = self.make_display_name(device.display_name, device["Class"], device['Address'])
         caption = self.make_caption(display_name, description, device['Address'])
 
-        self.set(tree_iter, caption=caption, icon_info=icon_info, alias=display_name, objpush=has_objpush)
-
-        try:
-            self.row_update_event(tree_iter, "Trusted", device['Trusted'])
-        except Exception as e:
-            logging.exception(e)
-        try:
-            self.row_update_event(tree_iter, "Paired", device['Paired'])
-        except Exception as e:
-            logging.exception(e)
-        try:
-            self.row_update_event(tree_iter, "Connected", device["Connected"])
-        except Exception as e:
-            logging.exception(e)
-        try:
-            self.row_update_event(tree_iter, "Blocked", device["Blocked"])
-        except Exception as e:
-            logging.exception(e)
+        self.set(tree_iter, caption=caption, icon_info=icon_info, objpush=has_objpush)
 
         if device["Connected"]:
             self._monitor_power_levels(tree_iter, device)
@@ -421,23 +399,12 @@ class ManagerDeviceList(DeviceList):
     def row_update_event(self, tree_iter: Gtk.TreeIter, key: str, value: Any) -> None:
         logging.info(f"{key} {value}")
 
-        if key == "Trusted":
-            if value:
-                self.set(tree_iter, trusted=True)
-            else:
-                self.set(tree_iter, trusted=False)
-
-        elif key == "Paired":
-            if value:
-                self.set(tree_iter, paired=True)
-            else:
-                self.set(tree_iter, paired=False)
-
-        elif key == "Alias":
+        if key == "Alias":
             device = self.get(tree_iter, "device")["device"]
-            c = self.make_caption(value, self.get_device_class(device), device['Address'])
             name = self.make_display_name(device.display_name, device["Class"], device["Address"])
-            self.set(tree_iter, caption=c, alias=name)
+            caption = self.make_caption(name, self.get_device_class(device), device['Address'])
+
+            self.set(tree_iter, caption=caption)
 
         elif key == "UUIDs":
             device = self.get(tree_iter, "device")["device"]
@@ -445,18 +412,12 @@ class ManagerDeviceList(DeviceList):
             self.set(tree_iter, objpush=has_objpush)
 
         elif key == "Connected":
-            self.set(tree_iter, connected=value)
-
             if value:
                 self._monitor_power_levels(tree_iter, self.get(tree_iter, "device")["device"])
             else:
                 self._disable_power_levels(tree_iter)
         elif key == "Name":
-            self.set(tree_iter, no_name=False)
             self.filter.refilter()
-
-        elif key == "Blocked":
-            self.set(tree_iter, blocked=value)
 
     def _update_power_levels(self, tree_iter: Gtk.TreeIter, device: Device, cinfo: conn_info) -> None:
         row = self.get(tree_iter, "cell_fader", "battery", "rssi", "lq", "tpl")
@@ -523,19 +484,20 @@ class ManagerDeviceList(DeviceList):
             self.tooltip_col = column
             return False
 
-        if column == self.columns["device_surface"]:
-            tree_iter = self.get_iter(path)
-            assert tree_iter is not None
+        tree_iter = self.get_iter(path)
+        assert tree_iter is not None
+        device = self.get(tree_iter, "device")["device"]
 
-            row = self.get(tree_iter, "connected", "trusted", "paired", "blocked")
+        if column == self.columns["device_surface"]:
+
             str_list = []
-            if row["connected"]:
+            if device["Connected"]:
                 str_list.append(_("Connected"))
-            if row["trusted"]:
+            if device["Trusted"]:
                 str_list.append(_("Trusted"))
-            if row["paired"]:
+            if device["Paired"]:
                 str_list.append(_("Paired"))
-            if row["blocked"]:
+            if device["Blocked"]:
                 str_list.append(_("Blocked"))
 
             text = ", ".join(str_list)
@@ -551,11 +513,8 @@ class ManagerDeviceList(DeviceList):
         elif column == self.columns["battery_pb"] \
                 or column == self.columns["tpl_pb"] \
                 or column == self.columns["rssi_pb"]:
-            tree_iter = self.get_iter(path)
-            assert tree_iter is not None
 
-            dt = self.get(tree_iter, "connected")["connected"]
-            if not dt:
+            if not device["Connected"]:
                 return False
 
             lines = [_("<b>Connected</b>")]
@@ -627,9 +586,10 @@ class ManagerDeviceList(DeviceList):
                        tree_iter: Gtk.TreeIter, data: Optional[str]) -> None:
         tree_iter = model.convert_iter_to_child_iter(tree_iter)
         if data is None:
-            row = self.get(tree_iter, "icon_info", "paired", "connected", "trusted", "blocked")
-            surface = self._make_device_icon(row["icon_info"], row["paired"],
-                                             row["connected"], row["trusted"], row["blocked"])
+            row = self.get(tree_iter, "icon_info", "device")
+            device = row["device"]
+            surface = self._make_device_icon(row["icon_info"], device["Paired"],
+                                             device["Connected"], device["Trusted"], device["Blocked"])
             cell.set_property("surface", surface)
         else:
             window = self.view.get_window()

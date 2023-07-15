@@ -264,8 +264,7 @@ class ManagerDeviceMenu:
             selected = self.Blueman.List.selected()
             if not selected:
                 return
-            row = self.Blueman.List.get(selected, "alias", "paired", "connected", "trusted", "objpush", "device",
-                                        "blocked")
+            row = self.Blueman.List.get(selected, "objpush", "device")
         else:
             (x, y) = self.Blueman.List.get_pointer()
             path, _column = self.Blueman.List.get_path_at_pos(x, y)
@@ -277,10 +276,9 @@ class ManagerDeviceMenu:
             child_iter = self.Blueman.List.filter.convert_iter_to_child_iter(tree_iter)
             assert child_iter is not None
 
-            row = self.Blueman.List.get(child_iter, "alias", "paired", "connected", "trusted", "objpush", "device",
-                                        "blocked")
+            row = self.Blueman.List.get(child_iter, "objpush", "device")
 
-        self.SelectedDevice = row["device"]
+        self.SelectedDevice = device = row["device"]
 
         op = self.get_op(self.SelectedDevice)
 
@@ -293,12 +291,13 @@ class ManagerDeviceMenu:
 
         show_generic_connect = self.show_generic_connect_calc(self.SelectedDevice['UUIDs'])
 
-        if not row["connected"] and show_generic_connect:
+        if not device["Connected"] and show_generic_connect:
             connect_item = create_menuitem(_("<b>_Connect</b>"), "bluetooth-symbolic")
             connect_item.connect("activate", lambda _item: self.connect_service(self.SelectedDevice))
             connect_item.props.tooltip_text = _("Connects auto connect profiles A2DP source, A2DP sink, and HID")
             connect_item.show()
             self.append(connect_item)
+
         elif show_generic_connect:
             connect_item = create_menuitem(_("<b>_Disconnect</b>"), "bluetooth-disabled-symbolic")
             connect_item.props.tooltip_text = _("Forcefully disconnect the device")
@@ -306,7 +305,7 @@ class ManagerDeviceMenu:
             connect_item.show()
             self.append(connect_item)
 
-        logging.debug(row["alias"])
+        logging.debug(device["Alias"])
 
         items = [item for plugin in self.Blueman.Plugins.get_loaded_plugins(MenuItemsProvider)
                  for item in plugin.on_request_menu_items(self, self.SelectedDevice)]
@@ -330,10 +329,10 @@ class ManagerDeviceMenu:
         generic_service = ServiceUUID("00000000-0000-0000-0000-000000000000")
         generic_autoconnect = (self.SelectedDevice.get_object_path(), str(generic_service)) in set(config["services"])
 
-        if row["connected"] or generic_autoconnect or autoconnect_items:
+        if device["Connected"] or generic_autoconnect or autoconnect_items:
             self.append(self._create_header(_("<b>Auto-connect:</b>")))
 
-            if row["connected"] or generic_autoconnect:
+            if device["Connected"] or generic_autoconnect:
                 item = Gtk.CheckMenuItem(label=generic_service.name)
                 config.bind_to_menuitem(item, self.SelectedDevice, str(generic_service))
                 item.show()
@@ -367,12 +366,12 @@ class ManagerDeviceMenu:
         item.props.tooltip_text = _("Create pairing with the device")
         self.append(item)
         item.show()
-        if not row["paired"]:
+        if not device["Paired"]:
             item.connect("activate", lambda x: self.Blueman.bond(self.SelectedDevice))
         else:
             item.props.sensitive = False
 
-        if not row["trusted"]:
+        if not device["Trusted"]:
             item = create_menuitem(_("_Trust"), "blueman-trust-symbolic")
             item.connect("activate", lambda x: self.Blueman.toggle_trust(self.SelectedDevice))
             self.append(item)
@@ -384,7 +383,7 @@ class ManagerDeviceMenu:
             item.show()
         item.props.tooltip_text = _("Mark/Unmark this device as trusted")
 
-        if not row["blocked"]:
+        if not device["Blocked"]:
             item = create_menuitem(_("_Block"), "blueman-block-symbolic")
             item.connect("activate", lambda x: self.Blueman.toggle_blocked(self.SelectedDevice))
             self.append(item)
