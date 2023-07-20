@@ -186,7 +186,7 @@ class ManagerDeviceMenu:
         self._appl.DisconnectService('(osd)', device.get_object_path(), uuid, port,
                                      result_handler=ok, error_handler=err, timeout=GLib.MAXINT)
 
-    def on_device_property_changed(self, lst: "ManagerDeviceList", _device: Device, tree_iter: Gtk.TreeIter,
+    def on_device_property_changed(self, lst: "ManagerDeviceList", _object_path: str, tree_iter: Gtk.TreeIter,
                                    key_value: Tuple[str, object]) -> None:
         key, value = key_value
         # print "menu:", key, value
@@ -264,7 +264,7 @@ class ManagerDeviceMenu:
             selected = self.Blueman.List.selected()
             if not selected:
                 return
-            device = self.Blueman.List.get(selected, "device")["device"]
+            object_path = self.Blueman.List.get(selected, "dbus_path")["dbus_path"]
         else:
             (x, y) = self.Blueman.List.get_pointer()
             path, _column = self.Blueman.List.get_path_at_pos(x, y)
@@ -276,9 +276,9 @@ class ManagerDeviceMenu:
             child_iter = self.Blueman.List.filter.convert_iter_to_child_iter(tree_iter)
             assert child_iter is not None
 
-            device = self.Blueman.List.get(child_iter, "device")["device"]
+            object_path = self.Blueman.List.get(child_iter, "dbus_path")["dbus_path"]
 
-        self.SelectedDevice = device
+        self.SelectedDevice = Device(obj_path=object_path)
 
         op = self.get_op(self.SelectedDevice)
 
@@ -291,7 +291,7 @@ class ManagerDeviceMenu:
 
         show_generic_connect = self.show_generic_connect_calc(self.SelectedDevice['UUIDs'])
 
-        if not device["Connected"] and show_generic_connect:
+        if not self.SelectedDevice["Connected"] and show_generic_connect:
             connect_item = create_menuitem(_("<b>_Connect</b>"), "bluetooth-symbolic")
             connect_item.connect("activate", lambda _item: self.connect_service(self.SelectedDevice))
             connect_item.props.tooltip_text = _("Connects auto connect profiles A2DP source, A2DP sink, and HID")
@@ -305,7 +305,7 @@ class ManagerDeviceMenu:
             connect_item.show()
             self.append(connect_item)
 
-        logging.debug(device["Alias"])
+        logging.debug(self.SelectedDevice["Alias"])
 
         items = [item for plugin in self.Blueman.Plugins.get_loaded_plugins(MenuItemsProvider)
                  for item in plugin.on_request_menu_items(self, self.SelectedDevice)]
@@ -327,13 +327,12 @@ class ManagerDeviceMenu:
 
         config = AutoConnectConfig()
         generic_service = ServiceUUID("00000000-0000-0000-0000-000000000000")
-        object_path = self.SelectedDevice.get_object_path()
         generic_autoconnect = (object_path, str(generic_service)) in set(config["services"])
 
-        if device["Connected"] or generic_autoconnect or autoconnect_items:
+        if self.SelectedDevice["Connected"] or generic_autoconnect or autoconnect_items:
             self.append(self._create_header(_("<b>Auto-connect:</b>")))
 
-            if device["Connected"] or generic_autoconnect:
+            if self.SelectedDevice["Connected"] or generic_autoconnect:
                 item = Gtk.CheckMenuItem(label=generic_service.name)
                 config.bind_to_menuitem(item, object_path, str(generic_service))
                 item.show()
@@ -355,7 +354,7 @@ class ManagerDeviceMenu:
         self.append(send_item)
         send_item.show()
 
-        if device.has_objpush:
+        if self.SelectedDevice.has_objpush:
             send_item.connect("activate", lambda x: self.Blueman.send(self.SelectedDevice))
             send_item.props.sensitive = True
 
@@ -367,12 +366,12 @@ class ManagerDeviceMenu:
         item.props.tooltip_text = _("Create pairing with the device")
         self.append(item)
         item.show()
-        if not device["Paired"]:
+        if not self.SelectedDevice["Paired"]:
             item.connect("activate", lambda x: self.Blueman.bond(self.SelectedDevice))
         else:
             item.props.sensitive = False
 
-        if not device["Trusted"]:
+        if not self.SelectedDevice["Trusted"]:
             item = create_menuitem(_("_Trust"), "blueman-trust-symbolic")
             item.connect("activate", lambda x: self.Blueman.toggle_trust(self.SelectedDevice))
             self.append(item)
@@ -384,7 +383,7 @@ class ManagerDeviceMenu:
             item.show()
         item.props.tooltip_text = _("Mark/Unmark this device as trusted")
 
-        if not device["Blocked"]:
+        if not self.SelectedDevice["Blocked"]:
             item = create_menuitem(_("_Block"), "blueman-block-symbolic")
             item.connect("activate", lambda x: self.Blueman.toggle_blocked(self.SelectedDevice))
             self.append(item)

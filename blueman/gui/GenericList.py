@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TYPE_CHECKING, Iterable, Mapping, Callable, Tuple, Union, Collection, List, Any
+from typing import Dict, Optional, TYPE_CHECKING, Iterable, Mapping, Callable, Tuple, Collection, List, Any
 
 import gi
 gi.require_version("Gtk", "3.0")

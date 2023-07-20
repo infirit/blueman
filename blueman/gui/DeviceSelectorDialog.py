@@ -45,6 +45,6 @@ class DeviceSelectorDialog(Gtk.Dialog):
     def on_adapter_changed(self, _devlist: DeviceList, _adapter: str) -> None:
         self.selection = None
 
-    def on_device_selected(self, devlist: DeviceList, device: Device, _tree_iter: Gtk.TreeIter) -> None:
+    def on_device_selected(self, devlist: DeviceList, object_path: str, _tree_iter: Gtk.TreeIter) -> None:
         assert devlist.Adapter is not None
-        self.selection = (devlist.Adapter.get_object_path(), device)
+        self.selection = (devlist.Adapter.get_object_path(), Device(obj_path=object_path))

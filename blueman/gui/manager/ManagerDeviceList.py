@@ -110,8 +110,8 @@ class ManagerDeviceList(DeviceList):
 
     def on_icon_theme_changed(self, _icon_them: Gtk.IconTheme) -> None:
         for row in self.liststore:
-            device = self.get(row.iter, "device")["device"]
-            self.row_setup_event(row.iter, device)
+            object_path = self.get(row.iter, "dbus_path")["dbus_path"]
+            self.row_setup_event(row.iter, object_path)
 
     def on_battery_created(self, _manager: Manager, obj_path: str) -> None:
         if obj_path not in self._batteries:
@@ -132,8 +132,8 @@ class ManagerDeviceList(DeviceList):
         return True
 
     def filter_func(self, _model: Gtk.TreeModel, tree_iter: Gtk.TreeIter, _data: Any) -> bool:
-        row = self.get(tree_iter, "no_name", "device")
-        device = row["device"]
+        row = self.get(tree_iter, "no_name", "dbus_path")
+        device = Device(obj_path=row["dbus_path"])
         klass = get_minor_class(device["Class"]) if device is not None else None
 
         if row["no_name"] and self.Config["hide-unnamed"] and klass not in (_("Keyboard"), _("Combo")):
@@ -153,7 +153,7 @@ class ManagerDeviceList(DeviceList):
         if path is not None:
             tree_iter = self.get_iter(path)
             assert tree_iter is not None
-            device = self.get(tree_iter, "device")["device"]
+            device = Device(obj_path=self.get(tree_iter, "dbus_path")["dbus_path"])
             command = f"blueman-sendto --device={device['Address']}"
 
             launch(command, paths=uris, name=_("File Sender"))
@@ -171,7 +171,7 @@ class ManagerDeviceList(DeviceList):
             if not self.selection.path_is_selected(path):
                 tree_iter = self.get_iter(path)
                 assert tree_iter is not None
-                device = self.get(tree_iter, "device")["device"]
+                device = Device(obj_path=self.get(tree_iter, "dbus_path")["dbus_path"])
                 if device.has_objpush:
                     Gdk.drag_status(drag_context, Gdk.DragAction.COPY, timestamp)
                     self.set_cursor(path)
@@ -209,10 +209,11 @@ class ManagerDeviceList(DeviceList):
         assert tree_iter is not None
         child_iter = self.filter.convert_iter_to_child_iter(tree_iter)
         assert child_iter is not None
-        device = self.get(child_iter, "device")["device"]
-        if not device:
+        object_path = self.get(child_iter, "dbus_path")["dbus_path"]
+        if not object_path:
             return False
 
+        device = Device(obj_path=object_path)
         if self.menu is None:
             self.menu = ManagerDeviceMenu(self.Blueman)
 
@@ -314,8 +315,8 @@ class ManagerDeviceList(DeviceList):
             return get_major_class(device['Class'])
 
     def row_setup_event(self, tree_iter: Gtk.TreeIter, object_path: str) -> None:
-        row_data = self.get(tree_iter, "initial_anim", "device")
-        device = row_data["device"]
+        row_data = self.get(tree_iter, "initial_anim")
+        device = Device(obj_path=object_path)
         if not row_data["initial_anim"]:
             assert self.liststore is not None
             child_path = self.liststore.get_path(tree_iter)
@@ -382,7 +383,7 @@ class ManagerDeviceList(DeviceList):
         tree_iter = self.get_iter(row_ref.get_path())
         assert tree_iter is not None
 
-        device = self.get(tree_iter, "device")["device"]
+        device = Device(obj_path=self.get(tree_iter, "dbus_path")["dbus_path"])
 
         if device["Connected"]:
             self._update_power_levels(tree_iter, device, cinfo)
@@ -396,8 +397,9 @@ class ManagerDeviceList(DeviceList):
     def row_update_event(self, tree_iter: Gtk.TreeIter, key: str, value: Any) -> None:
         logging.info(f"{key} {value}")
 
+        object_path = self.get(tree_iter, "dbus_path")["dbus_path"]
+        device = Device(obj_path=object_path)
         if key == "Alias":
-            device = self.get(tree_iter, "device")["device"]
             name = self.make_display_name(device.display_name, device["Class"], device["Address"])
             caption = self.make_caption(name, self.get_device_class(device), device['Address'])
 
@@ -405,7 +407,7 @@ class ManagerDeviceList(DeviceList):
 
         elif key == "Connected":
             if value:
-                self._monitor_power_levels(tree_iter, self.get(tree_iter, "device")["device"])
+                self._monitor_power_levels(tree_iter, device)
             else:
                 self._disable_power_levels(tree_iter)
         elif key == "Name":
@@ -478,7 +480,7 @@ class ManagerDeviceList(DeviceList):
 
         tree_iter = self.get_iter(path)
         assert tree_iter is not None
-        device = self.get(tree_iter, "device")["device"]
+        device = Device(obj_path=self.get(tree_iter, "dbus_path")["dbus_path"])
 
         if column == self.columns["device_surface"]:
 
@@ -569,8 +571,8 @@ class ManagerDeviceList(DeviceList):
                        tree_iter: Gtk.TreeIter, data: Optional[str]) -> None:
         tree_iter = model.convert_iter_to_child_iter(tree_iter)
         if data is None:
-            row = self.get(tree_iter, "icon_info", "device")
-            device = row["device"]
+            row = self.get(tree_iter, "icon_info", "dbus_path")
+            device = Device(obj_path=row["dbus_path"])
             surface = self._make_device_icon(row["icon_info"], device["Paired"],
                                              device["Connected"], device["Trusted"], device["Blocked"])
             cell.set_property("surface", surface)

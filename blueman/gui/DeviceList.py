@@ -25,9 +25,9 @@ class DeviceList(GenericList):
     __gsignals__: GSignals = {
         # @param: device TreeIter
         # note: None None is given when there ar no more rows, or when selected device is removed
-        'device-selected': (GObject.SignalFlags.RUN_LAST, None, (Device, Gtk.TreeIter,)),
+        'device-selected': (GObject.SignalFlags.RUN_LAST, None, (str, Gtk.TreeIter,)),
         # @param: device, TreeIter, (key, value)
-        'device-property-changed': (GObject.SignalFlags.RUN_LAST, None, (Device, Gtk.TreeIter, object,)),
+        'device-property-changed': (GObject.SignalFlags.RUN_LAST, None, (str, Gtk.TreeIter, object,)),
         # @param: adapter, (key, value)
         'adapter-property-changed': (GObject.SignalFlags.RUN_LAST, None, (Adapter, object,)),
         # @param: progress (0 to 1)
@@ -69,7 +69,6 @@ class DeviceList(GenericList):
         self.discovering = False
 
         data = tabledata + [
-            {"id": "device", "type": object},
             {"id": "dbus_path", "type": str},
             {"id": "timestamp", "type": float},
             {"id": "no_name", "type": bool}
@@ -120,9 +119,8 @@ class DeviceList(GenericList):
         model, tree_iter = selection.get_selected()
         if tree_iter:
             tree_iter = model.convert_iter_to_child_iter(tree_iter)
-            row = self.get(tree_iter, "device")
-            dev = row["device"]
-            self.emit("device-selected", dev, tree_iter)
+            row = self.get(tree_iter, "dbus_path")
+            self.emit("device-selected", row["dbus_path"], tree_iter)
 
     def _on_property_changed(self, _adapter: AnyAdapter, key: str, value: object, path: str) -> None:
         if not self.Adapter or self.Adapter.get_object_path() != path:
@@ -137,10 +135,10 @@ class DeviceList(GenericList):
         tree_iter = self.find_device_by_path(path)
 
         if tree_iter is not None:
-            dev = self.get(tree_iter, "device")["device"]
+            object_path = self.get(tree_iter, "dbus_path")["dbus_path"]
             self.row_update_event(tree_iter, key, value)
 
-            self.emit("device-property-changed", dev, tree_iter, (key, value))
+            self.emit("device-property-changed", object_path, tree_iter, (key, value))
 
     # Override when subclassing
     def on_icon_theme_changed(self, _icon_them: Gtk.IconTheme) -> None:
@@ -228,7 +226,6 @@ class DeviceList(GenericList):
         logging.info("adding new device")
 
         colls = {
-            "device": device,
             "dbus_path": object_path,
             "timestamp": float(datetime.strftime(datetime.now(), '%Y%m%d%H%M%S%f')),
             "no_name": "Name" not in device
@@ -268,12 +265,12 @@ class DeviceList(GenericList):
         if self.Adapter is not None:
             self.Adapter.stop_discovery()
 
-    def get_selected_device(self) -> Optional[Device]:
+    def get_selected_device(self) -> Optional[str]:
         selected = self.selected()
         if selected is not None:
-            row = self.get(selected, "device")
-            device: Device = row["device"]
-            return device
+            row = self.get(selected, "dbus_path")
+            object_path: str = row["dbus_path"]
+            return object_path
         return None
 
     def clear(self) -> None:
@@ -304,21 +301,13 @@ class DeviceList(GenericList):
             return None
 
     def do_cache(self, tree_iter: Gtk.TreeIter, kwargs: Dict[str, Any]) -> None:
-        object_path = None
+        object_path = kwargs.get("dbus_path", None)
 
-        if "device" in kwargs:
-            if kwargs["device"]:
-                object_path = kwargs['device'].get_object_path()
+        if object_path is not None:
+            if object_path in self.path_to_row:
+                logging.error(f"{object_path} already in cache")
 
-        elif "dbus_path" in kwargs:
-            if kwargs["dbus_path"]:
-                object_path = kwargs['dbus_path']
-            else:
-                existing = self.get(tree_iter, "dbus_path")["dbus_path"]
-                if existing is not None:
-                    del self.path_to_row[existing]
-
-        if object_path:
+        if object_path is not None:
             logging.info(f"Caching new device {object_path}")
             self.path_to_row[object_path] = Gtk.TreeRowReference.new(self.liststore,
                                                                      self.liststore.get_path(tree_iter))
@@ -327,7 +316,3 @@ class DeviceList(GenericList):
         tree_iter = super().append(**columns)
         self.do_cache(tree_iter, columns)
         return tree_iter
-
-    def set(self, tree_iter: Gtk.TreeIter, **kwargs: object) -> None:
-        super().set(tree_iter, **kwargs)
-        self.do_cache(tree_iter, kwargs)

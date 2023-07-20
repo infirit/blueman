@@ -52,8 +52,9 @@ class ManagerToolbar:
         self.on_adapter_changed(blueman.List, blueman.List.get_adapter_path())
 
     def on_action(self, _button: Gtk.ToolButton, func: Callable[[Device], None]) -> None:
-        device = self.blueman.List.get_selected_device()
-        if device is not None:
+        object_path = self.blueman.List.get_selected_device()
+        if object_path is not None:
+            device = Device(obj_path=object_path)
             func(device)
 
     def on_adapter_property_changed(self, _lst: ManagerDeviceList, _adapter: Adapter,
@@ -73,12 +74,13 @@ class ManagerToolbar:
         else:
             self.b_search.props.sensitive = True
 
-    def on_device_selected(self, _dev_list: ManagerDeviceList, device: Device, tree_iter: Gtk.TreeIter) -> None:
-        if device is None or tree_iter is None:
+    def on_device_selected(self, _dev_list: ManagerDeviceList, object_path: str, tree_iter: Gtk.TreeIter) -> None:
+        if object_path is None or tree_iter is None:
             self.b_bond.props.sensitive = False
             self.b_remove.props.sensitive = False
             self.b_trust.props.sensitive = False
         else:
+            device = Device(obj_path=object_path)
             self.b_remove.props.sensitive = True
             if device["Paired"]:
                 self.b_bond.props.sensitive = False
@@ -102,9 +104,9 @@ class ManagerToolbar:
             else:
                 self.b_send.props.sensitive = False
 
-    def on_device_propery_changed(self, dev_list: ManagerDeviceList, device: Device, tree_iter: Gtk.TreeIter,
+    def on_device_propery_changed(self, dev_list: ManagerDeviceList, object_path: str, tree_iter: Gtk.TreeIter,
                                   key_value: Tuple[str, object]) -> None:
         key, value = key_value
         if dev_list.compare(tree_iter, dev_list.selected()):
             if key == "Trusted" or key == "Paired" or key == "UUIDs":
-                self.on_device_selected(dev_list, device, tree_iter)
+                self.on_device_selected(dev_list, object_path, tree_iter)

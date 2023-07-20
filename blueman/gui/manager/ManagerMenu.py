@@ -3,7 +3,6 @@ import logging
 from typing import Dict, Tuple, TYPE_CHECKING, Any, Optional, Sequence
 
 from blueman.bluez.Adapter import Adapter
-from blueman.bluez.Device import Device
 from blueman.bluez.Manager import Manager
 from blueman.gui.manager.ManagerDeviceList import ManagerDeviceList
 from blueman.gui.manager.ManagerDeviceMenu import ManagerDeviceMenu
@@ -134,8 +133,8 @@ class ManagerMenu:
             logging.debug("refilter")
             self.blueman.List.filter.refilter()
 
-    def on_device_selected(self, _lst: ManagerDeviceList, device: Device, tree_iter: Gtk.TreeIter) -> None:
-        if tree_iter and device:
+    def on_device_selected(self, _lst: ManagerDeviceList, object_path: str, tree_iter: Gtk.TreeIter) -> None:
+        if tree_iter and object_path:
             self.item_device.props.sensitive = True
 
             if self.device_menu is None:
