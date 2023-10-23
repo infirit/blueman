@@ -1,9 +1,11 @@
 import logging
+import random
 from gettext import gettext as _
 from html import escape
 from xml.etree import ElementTree
 from typing import Dict, Optional, overload, Callable, Union, TYPE_CHECKING, Tuple, Any, List
 
+from blueman.DeviceClass import get_minor_class
 from blueman.bluez.Device import Device
 from blueman.bluez.AgentManager import AgentManager
 from blueman.Sdp import ServiceUUID
@@ -159,22 +161,37 @@ class BluezAgent(DbusService):
             self._notification.close()
             self._notification = None
 
+    def _display_pin_pass(self, object_path: str) -> int:
+        pin = random.randint(10000, 99999)
+        notification_msg = _("Pairing passkey for") + f"{self.get_device_string(object_path)}: {pin}"
+        Notification("Bluetooth", notification_msg, 0, icon_name="blueman").show()
+        return pin
+
     def _on_request_pin_code(self, object_path: str, ok: Callable[[str], None],
                              err: Callable[[Union[BluezErrorCanceled, BluezErrorRejected]], None]) -> None:
         logging.info("Agent.RequestPinCode")
-        dialog_msg = _("Enter PIN code for authentication:")
-
-        self.ask_passkey(dialog_msg, False, object_path, ok, err)
-        if self.dialog:
-            self.dialog.present()
+        device = Device(obj_path=object_path)
+        klass = get_minor_class(device["Class"])
+        if klass in (_("Keyboard"), _("Combo")):
+            ok(str(self._display_pin_pass(object_path)))
+        else:
+            dialog_msg = _("Enter PIN code for authentication:")
+            self.ask_passkey(dialog_msg, False, object_path, ok, err)
+            if self.dialog:
+                self.dialog.present()
 
     def _on_request_passkey(self, object_path: str, ok: Callable[[int], None],
                             err: Callable[[Union[BluezErrorCanceled, BluezErrorRejected]], None]) -> None:
         logging.info("Agent.RequestPasskey")
-        dialog_msg = _("Enter passkey for authentication:")
-        self.ask_passkey(dialog_msg, True, object_path, ok, err)
-        if self.dialog:
-            self.dialog.present()
+        device = Device(obj_path=object_path)
+        klass = get_minor_class(device["Class"])
+        if klass in (_("Keyboard"), _("Combo")):
+            ok(self._display_pin_pass(object_path))
+        else:
+            dialog_msg = _("Enter passkey for authentication:")
+            self.ask_passkey(dialog_msg, True, object_path, ok, err)
+            if self.dialog:
+                self.dialog.present()
 
     def _on_display_passkey(self, object_path: str, passkey: int, entered: int) -> None:
         logging.info(f"DisplayPasskey ({object_path}, {passkey:d} {entered:d})")
