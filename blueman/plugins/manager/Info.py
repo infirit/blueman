@@ -85,18 +85,23 @@ def show_info(device: Device, parent: Gtk.Window) -> None:
         ('Appearance', lambda x: f"0x{x:04x}"),
         ('Icon', None),
         ('Paired', format_boolean),
+        ('Bonded', format_boolean),
         ('Trusted', format_boolean),
         ('Blocked', format_boolean),
         ('LegacyPairing', format_boolean),
         ('RSSI', format_rssi),
+        ('TxPower', format_rssi),
         ('Connected', format_boolean),
         ('UUIDs', format_uuids),
         ('Modalias', None),
         ('Adapter', None),
+        ('ServiceResolved', format_boolean),
         # FIXME below 3 we need some sample data to decode and display properly
         ('ManufacturerData', str),
         ('ServiceData', str),
-        ('AdvertisingData', str)
+        ('AdvertisingData', str),
+        ('AdvertisingFlags', str),
+        ('Sets', str)
     )
     for name, func in properties:
         try:
