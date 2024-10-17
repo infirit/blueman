@@ -6,10 +6,12 @@
 * Fix Rfcom plugin dbus signature
 * Set an initial selected device in blueman-sendto
 * AutoConnect: Store bluetooth address instead of object path
+* Make search button available after device list becomes empty (@astcri)
 
 ### Changes
 * Add Galic and Esperanto translations
 * AutoConnect: Automatically convert path to address
+* Include bluetooth switch when updating sensitive
 
 ## 2.4.3
 
