@@ -97,6 +97,28 @@ class Blueman(Gtk.Application):
                 margin_right = statusbar.get_margin_right()
                 statusbar.set_margin_right(margin_right + 10)
 
+            sw = self.builder.get_widget("scrollview", Gtk.ScrolledWindow)
+            # Disable overlay scrolling
+            if Gtk.get_minor_version() >= 16:
+                sw.props.overlay_scrolling = False
+
+            self.List = ManagerDeviceList(adapter=self.Config["last-adapter"], inst=self)
+
+            self.List.show()
+            sw.add(self.List)
+
+            self.Toolbar = ManagerToolbar(self)
+            self.Menu = ManagerMenu(self)
+            self.Stats = ManagerStats(self)
+
+            if self.List.is_valid_adapter():
+                self.List.populate_devices()
+
+            self.List.connect("adapter-changed", self.on_adapter_changed)
+
+            self.Config.bind("show-toolbar", toolbar, "visible", Gio.SettingsBindFlags.DEFAULT)
+            self.Config.bind("show-statusbar", statusbar, "visible", Gio.SettingsBindFlags.DEFAULT)
+
             def on_applet_signal(_proxy: AppletService, _sender: str, signal_name: str, params: GLib.Variant) -> None:
                 if signal_name == 'BluetoothStatusChanged':
                     status = params.unpack()[0]
@@ -131,28 +153,6 @@ class Blueman(Gtk.Application):
                 except DBusProxyFailed:
                     print("Blueman applet needs to be running")
                     bmexit()
-
-                sw = self.builder.get_widget("scrollview", Gtk.ScrolledWindow)
-                # Disable overlay scrolling
-                if Gtk.get_minor_version() >= 16:
-                    sw.props.overlay_scrolling = False
-
-                self.List = ManagerDeviceList(adapter=self.Config["last-adapter"], inst=self)
-
-                self.List.show()
-                sw.add(self.List)
-
-                self.Toolbar = ManagerToolbar(self)
-                self.Menu = ManagerMenu(self)
-                self.Stats = ManagerStats(self)
-
-                if self.List.is_valid_adapter():
-                    self.List.populate_devices()
-
-                self.List.connect("adapter-changed", self.on_adapter_changed)
-
-                self.Config.bind("show-toolbar", toolbar, "visible", Gio.SettingsBindFlags.DEFAULT)
-                self.Config.bind("show-statusbar", statusbar, "visible", Gio.SettingsBindFlags.DEFAULT)
 
                 bt_status_action = self.lookup_action("bluetooth_status")
                 bt_status_action.change_state(GLib.Variant.new_boolean(self.Applet.GetBluetoothStatus()))
