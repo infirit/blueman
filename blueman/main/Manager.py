@@ -98,9 +98,6 @@ class Blueman(Gtk.Application):
                 statusbar.set_margin_right(margin_right + 10)
 
             sw = self.builder.get_widget("scrollview", Gtk.ScrolledWindow)
-            # Disable overlay scrolling
-            if Gtk.get_minor_version() >= 16:
-                sw.props.overlay_scrolling = False
 
             self.List = ManagerDeviceList(adapter=self.Config["last-adapter"], inst=self)
 

@@ -448,6 +448,7 @@
             <property name="can-focus">True</property>
             <property name="vexpand">True</property>
             <property name="shadow-type">in</property>
+            <property name="overlay-scrolling">False</property>
             <child>
               <placeholder/>
             </child>
