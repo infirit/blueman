@@ -92,11 +92,6 @@ class Blueman(Gtk.Application):
             self.Plugins = PluginManager(ManagerPlugin, blueman.plugins.manager, self)
             self.Plugins.load_plugin()
 
-            # Add margin for resize grip or it will overlap
-            if self.window.get_has_resize_grip():
-                margin_right = statusbar.get_margin_right()
-                statusbar.set_margin_right(margin_right + 10)
-
             sw = self.builder.get_widget("scrollview", Gtk.ScrolledWindow)
 
             self.List = ManagerDeviceList(adapter=self.Config["last-adapter"], inst=self)
