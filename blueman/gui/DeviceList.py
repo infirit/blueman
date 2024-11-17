@@ -235,7 +235,7 @@ class DeviceList(GenericList):
             "no_name": "Name" not in device
         }
 
-        tree_iter = self.append(**colls)
+        tree_iter = self.add_row(**colls)
         self.row_setup_event(tree_iter, device)
 
         if self.get_selected_device() is None:
@@ -322,8 +322,8 @@ class DeviceList(GenericList):
             self.path_to_row[object_path] = Gtk.TreeRowReference.new(self.liststore,
                                                                      self.liststore.get_path(tree_iter))
 
-    def append(self, **columns: object) -> Gtk.TreeIter:
-        tree_iter = super().append(**columns)
+    def add_row(self, **columns: object) -> Gtk.TreeIter:
+        tree_iter = super().add_row(**columns)
         self.do_cache(tree_iter, columns)
         return tree_iter
 

@@ -1,4 +1,4 @@
-from typing import Dict, Optional, TYPE_CHECKING, Iterable, Mapping, Callable, Tuple, Collection, Any
+from typing import Dict, Optional, TYPE_CHECKING, Iterable, Mapping, Callable, Tuple, Any
 
 import gi
 gi.require_version("Gtk", "3.0")
@@ -73,10 +73,8 @@ class GenericList(Gtk.TreeView):
         else:
             return False
 
-    def _add(self, **columns: object) -> Collection[object]:
-        items: Dict[int, object] = {}
-        for k, v in self.ids.items():
-            items[v] = None
+    def add_row(self, **columns: object) -> Gtk.TreeIter:
+        items: Dict[int, object] = {v: None for v in self.ids.values()}
 
         for k, val in columns.items():
             if k in self.ids:
@@ -84,11 +82,7 @@ class GenericList(Gtk.TreeView):
             else:
                 raise Exception(f"Invalid key {k}")
 
-        return items.values()
-
-    def append(self, **columns: object) -> Gtk.TreeIter:
-        vals = self._add(**columns)
-        return self.liststore.append(vals)
+        return self.liststore.append(items.values())
 
     def set(self, tree_iter: Gtk.TreeIter, **cols: object) -> None:
         for k, v in cols.items():
