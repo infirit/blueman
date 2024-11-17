@@ -90,10 +90,6 @@ class GenericList(Gtk.TreeView):
         vals = self._add(**columns)
         return self.liststore.append(vals)
 
-    def prepend(self, **columns: object) -> Gtk.TreeIter:
-        vals = self._add(**columns)
-        return self.liststore.prepend(vals)
-
     def set(self, tree_iter: Gtk.TreeIter, **cols: object) -> None:
         for k, v in cols.items():
             self.liststore.set(tree_iter, self.ids[k], v)

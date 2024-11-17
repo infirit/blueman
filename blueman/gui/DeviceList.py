@@ -327,11 +327,6 @@ class DeviceList(GenericList):
         self.do_cache(tree_iter, columns)
         return tree_iter
 
-    def prepend(self, **columns: object) -> Gtk.TreeIter:
-        tree_iter = super().prepend(**columns)
-        self.do_cache(tree_iter, columns)
-        return tree_iter
-
     def set(self, tree_iter: Gtk.TreeIter, **kwargs: object) -> None:
         super().set(tree_iter, **kwargs)
         self.do_cache(tree_iter, kwargs)
