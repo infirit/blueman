@@ -119,47 +119,47 @@ class Blueman(Gtk.Application):
             self.Config.bind("show-toolbar", toolbar, "visible", Gio.SettingsBindFlags.DEFAULT)
             self.Config.bind("show-statusbar", statusbar, "visible", Gio.SettingsBindFlags.DEFAULT)
 
-            def on_applet_signal(_proxy: AppletService, _sender: str, signal_name: str, params: GLib.Variant) -> None:
-                if signal_name == 'BluetoothStatusChanged':
-                    status = params.unpack()[0]
-                    action = self.lookup_action("bluetooth_status")
-                    action.change_state(GLib.Variant.new_boolean(status))
-
-            def on_dbus_name_vanished(_connection: Gio.DBusConnection, name: str) -> None:
-                logging.info(name)
-
-                if self.window is not None:
-                    self.window.hide()
-
-                d = ErrorDialog(
-                    _("Connection to BlueZ failed"),
-                    _("Bluez daemon is not running, blueman-manager cannot continue.\n"
-                      "This probably means that there were no Bluetooth adapters detected "
-                      "or Bluetooth daemon was not started."),
-                    icon_name="blueman")
-                d.run()
-                d.destroy()
-
-                # FIXME ui can handle BlueZ start/stop but we should inform user
-                self.quit()
-
-            def on_dbus_name_appeared(_connection: Gio.DBusConnection, name: str, owner: str) -> None:
-                logging.info(f"{name} {owner}")
-                setup_icon_path()
-
-                try:
-                    self.Applet = AppletService()
-                    self.Applet.connect('g-signal', on_applet_signal)
-                except DBusProxyFailed:
-                    print("Blueman applet needs to be running")
-                    bmexit()
-
-                bt_status_action = self.lookup_action("bluetooth_status")
-                bt_status_action.change_state(GLib.Variant.new_boolean(self.Applet.GetBluetoothStatus()))
-
-            Manager.watch_name_owner(on_dbus_name_appeared, on_dbus_name_vanished)
+            Manager.watch_name_owner(self.on_dbus_name_appeared, self.on_dbus_name_vanished)
 
         self.window.present_with_time(Gtk.get_current_event_time())
+
+    def on_applet_signal(self, _proxy: AppletService, _sender: str, signal_name: str, params: GLib.Variant) -> None:
+        if signal_name == 'BluetoothStatusChanged':
+            status = params.unpack()[0]
+            action = self.lookup_action("bluetooth_status")
+            action.change_state(GLib.Variant.new_boolean(status))
+
+    def on_dbus_name_vanished(self, _connection: Gio.DBusConnection, name: str) -> None:
+        logging.info(name)
+
+        if self.window is not None:
+            self.window.hide()
+
+        d = ErrorDialog(
+            _("Connection to BlueZ failed"),
+            _("Bluez daemon is not running, blueman-manager cannot continue.\n"
+              "This probably means that there were no Bluetooth adapters detected "
+              "or Bluetooth daemon was not started."),
+            icon_name="blueman")
+        d.run()
+        d.destroy()
+
+        # FIXME ui can handle BlueZ start/stop but we should inform user
+        self.quit()
+
+    def on_dbus_name_appeared(self, _connection: Gio.DBusConnection, name: str, owner: str) -> None:
+        logging.info(f"{name} {owner}")
+        setup_icon_path()
+
+        try:
+            self.Applet = AppletService()
+            self.Applet.connect('g-signal', self.on_applet_signal)
+        except DBusProxyFailed:
+            print("Blueman applet needs to be running")
+            bmexit()
+
+        bt_status_action = self.lookup_action("bluetooth_status")
+        bt_status_action.change_state(GLib.Variant.new_boolean(self.Applet.GetBluetoothStatus()))
 
     def _on_bt_state_changed(self, action: Gio.SimpleAction, state_variant: GLib.Variant) -> None:
         action.set_state(state_variant)
