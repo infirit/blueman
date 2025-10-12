@@ -18,7 +18,7 @@ DHCPDHANDLERS: dict[str, type["DHCPHandler"]] = {
 
 class Network(MechanismPlugin):
     def on_load(self) -> None:
-        self.parent.add_method("DhcpClient", ("s",), "s", self._run_dhcp_client, pass_sender=True, is_async=True)
+        self.parent.add_method("DhcpClient", ("o",), "s", self._run_dhcp_client, pass_sender=True, is_async=True)
         self.parent.add_method("EnableNetwork", ("s", "s", "s", "b"), "", self._enable_network, pass_sender=True)
         self.parent.add_method("DisableNetwork", (), "", self._disable_network, pass_sender=True)
 
