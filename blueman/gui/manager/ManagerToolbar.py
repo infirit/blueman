@@ -66,7 +66,7 @@ class ManagerToolbar:
         powered = adapter is not None and adapter["Powered"]
         self.b_search.props.sensitive = powered and not (adapter and adapter["Discovering"])
 
-        pm_enabled = "PowerManager" in self.blueman.Applet.QueryPlugins()
+        pm_enabled = "PowerManager" in self.blueman.Applet.plugins
         bt_status_box = self.blueman.builder.get_widget("bt_status_box", Gtk.Box)
         bt_status_box.set_visible(pm_enabled)
 

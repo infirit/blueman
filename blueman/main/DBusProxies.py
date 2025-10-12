@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from typing import Iterable, cast
 from gettext import gettext as _
 import logging
@@ -35,16 +36,26 @@ class ProxyBase(Gio.DBusProxy, metaclass=SingletonGObjectMeta):
         except GLib.Error as e:
             raise DBusProxyFailed(e.message)
 
-    def call_method(self, name: str, params: GLib.Variant | None) -> None:
+    def call_method_sync(self, name: str, params: GLib.Variant | None = None) -> GLib.Variant:
+        return self.call_sync(name, params, Gio.DBusCallFlags.NONE, -1, None)
+
+    def call_method(
+            self,
+            name: str,
+            params: GLib.Variant,
+            reply: Callable[..., None],
+            error: Callable[[GLib.Error], None],
+            timeout: int = -1
+    ) -> None:
         def call_finish(proxy: ProxyBase, response: Gio.AsyncResult) -> None:
             try:
-                proxy.call_finish(response)
-            except GLib.Error:
+                result = proxy.call_finish(response)
+                reply(result)
+            except GLib.Error as e:
                 logging.error(f"Failed to execute method {name}", exc_info=True)
-                raise
+                error(e)
 
-        self.call(name, params, Gio.DBusCallFlags.NONE, -1, None, call_finish)
-
+        self.call(name, params, Gio.DBusCallFlags.NONE, timeout, None, call_finish)
 
 class DBus(ProxyBase):
     def __init__(self) -> None:
@@ -66,6 +77,42 @@ class AppletService(ProxyBase):
         super().__init__(name=self.NAME, interface_name=interface_name,
                          object_path=self.PATH)
 
+    def connect_service(
+            self,
+            object_path: ObjectPath,
+            uuid: str,
+            reply_handler: Callable[..., None],
+            error_handler: Callable[[GLib.Error], None]
+    ) -> None:
+        param = GLib.Variant("(os)", (object_path, uuid))
+        self.call_method("ConnectService", param, reply_handler, error_handler, 90000)
+
+    def enable_plugin(self, plugin: str) -> None:
+        param = GLib.Variant("(sb)", (plugin, True))
+        self.call_method_sync("SetPluginConfig", param)
+
+    def disable_plugin(self, plugin: str) -> None:
+        param = GLib.Variant("(sb)", (plugin, False))
+        self.call_method_sync("SetPluginConfig", param)
+
+    def open_plugin_dialog(self) -> None:
+        self.call_method_sync("OpenPluginDialog", None)
+
+    @property
+    def available_plugins(self) -> list[str]:
+        result: GLib.Variant = self.call_method_sync("QueryAvailablePlugins")
+        values: list[str] = result.unpack()[0]
+        if not values:
+            raise DBusProxyFailed("Applet has no plugins!")
+        return values
+
+    @property
+    def plugins(self) -> list[str]:
+        result: GLib.Variant = self.call_method_sync("QueryPlugins")
+        values: list[str] = result.unpack()[0]
+        if not values:
+            raise DBusProxyFailed("Applet has no loaded plugins!")
+        return values
 
 class AppletPowerManagerService(ProxyBase):
     def __init__(self) -> None:
@@ -154,7 +201,7 @@ class ManagerService(ProxyBase):
     def activate(self) -> None:
         try:
             param = GLib.Variant('(a{sv})', ({},))
-            self.call_method("Activate", param)
+            self.call_method_sync("Activate", param)
         except GLib.Error:
             # This can different errors, depending on the system configuration, typically:
             # * org.freedesktop.DBus.Error.Spawn.ChildExited if dbus-daemon tries to launch the service itself.
@@ -170,7 +217,7 @@ class ManagerService(ProxyBase):
 
     def _call_action(self, name: str) -> None:
         param = GLib.Variant('(sava{sv})', (name, [], {}))
-        self.call_method('ActivateAction', param)
+        self.call_method_sync('ActivateAction', param)
 
     def quit(self) -> None:
         self._call_action("Quit")

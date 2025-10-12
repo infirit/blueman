@@ -195,25 +195,25 @@ class Network(ServicePlugin):
 
         applet = AppletService()
 
-        avail_plugins = applet.QueryAvailablePlugins()
-        active_plugins = applet.QueryPlugins()
+        avail_plugins = applet.available_plugins
+        active_plugins = applet.plugins
 
         def dun_support_toggled(rb: Gtk.RadioButton, x: str) -> None:
             if rb.props.active and x == "nm":
-                applet.SetPluginConfig('(sb)', "PPPSupport", False)
-                applet.SetPluginConfig('(sb)', "NMDUNSupport", True)
+                applet.disable_plugin("PPPSupport")
+                applet.enable_plugin("NMDUNSupport")
             elif rb.props.active and x == "blueman":
-                applet.SetPluginConfig('(sb)', "NMDUNSupport", False)
-                applet.SetPluginConfig('(sb)', "PPPSupport", True)
+                applet.disable_plugin("NMDUNSupport")
+                applet.enable_plugin("PPPSupport")
 
         def pan_support_toggled(rb: Gtk.RadioButton, x: str) -> None:
             if rb.props.active and x == "nm":
-                applet.SetPluginConfig('(sb)', "DhcpClient", False)
-                applet.SetPluginConfig('(sb)', "NMPANSupport", True)
+                applet.disable_plugin("DhcpClient")
+                applet.enable_plugin("NMPANSupport")
 
             elif rb.props.active and x == "blueman":
-                applet.SetPluginConfig('(sb)', "NMPANSupport", False)
-                applet.SetPluginConfig('(sb)', "DhcpClient", True)
+                applet.disable_plugin("NMPANSupport")
+                applet.enable_plugin("DhcpClient")
 
         if "PPPSupport" in active_plugins:
             rb_dun_blueman.props.active = True

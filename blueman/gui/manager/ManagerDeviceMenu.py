@@ -139,13 +139,13 @@ class ManagerDeviceMenu(Gtk.Menu):
     GENERIC_CONNECT = "00000000-0000-0000-0000-000000000000"
 
     def connect_service(self, device: Device, uuid: str = GENERIC_CONNECT) -> None:
-        def success(_obj: AppletService, _result: None, _user_data: None) -> None:
+        def success(_result: None) -> None:
             logging.info("success")
             prog.message(_("Success!"))
 
             self.unset_op(device)
 
-        def fail(_obj: AppletService | None, result: GLib.Error, _user_data: None) -> None:
+        def fail(result: GLib.Error) -> None:
             prog.message(_("Failed"))
 
             self.unset_op(device)
@@ -158,12 +158,10 @@ class ManagerDeviceMenu(Gtk.Menu):
             prog.connect("cancelled", lambda x: self.disconnect_service(device))
 
         if self._appl is None:
-            fail(None, GLib.Error('Applet DBus Service not available'), None)
+            fail(GLib.Error('Applet DBus Service not available'))
             return
 
-        self._appl.ConnectService('(os)', device.get_object_path(), uuid,
-                                  result_handler=success, error_handler=fail,
-                                  timeout=GLib.MAXINT)
+        self._appl.connect_service(device.get_object_path(), uuid, success, fail)
 
         prog.start()
 

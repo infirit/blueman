@@ -87,7 +87,7 @@ class Services(ManagerPlugin, MenuItemsProvider):
 
         for action, priority in {(action, service.priority)
                                  for service in services for action in service.common_actions
-                                 if any(plugin in appl.QueryPlugins() for plugin in action.plugins)}:
+                                 if any(plugin in appl.plugins for plugin in action.plugins)}:
             item = create_menuitem(action.title, action.icon)
             items.append(DeviceMenuItem(item, DeviceMenuItem.Group.ACTIONS, priority + 200))
             item.show()

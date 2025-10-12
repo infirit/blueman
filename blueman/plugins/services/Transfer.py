@@ -19,7 +19,7 @@ class Transfer(ServicePlugin):
         self.widget = self._builder.get_widget("transfer", Gtk.Grid)
 
         a = AppletService()
-        if "TransferService" in a.QueryPlugins():
+        if "TransferService" in a.plugins:
             self._setup_transfer()
         else:
             self.widget.props.sensitive = False

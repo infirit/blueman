@@ -132,7 +132,7 @@ class Blueman(Gtk.Application):
             status = params.unpack()[0]
             action.change_state(GLib.Variant.new_boolean(status))
         elif signal_name == "PluginsChanged":
-            if "PowerManager" in self.Applet.QueryPlugins():
+            if "PowerManager" in self.Applet.plugins:
                 status = self.PowerManager.get_bluetooth_status()
                 action.change_state(GLib.Variant.new_boolean(status))
 
@@ -160,7 +160,7 @@ class Blueman(Gtk.Application):
 
         self.List.connect("adapter-changed", self.on_adapter_changed)
 
-        pm_available = "PowerManager" in self.Applet.QueryPlugins()
+        pm_available = "PowerManager" in self.Applet.plugins
         action_status = self.PowerManager.get_bluetooth_status() if pm_available else False
         bt_status_action = self.lookup_action("bluetooth_status")
         bt_status_action.change_state(GLib.Variant.new_boolean(action_status))
@@ -249,7 +249,7 @@ class Blueman(Gtk.Application):
                 assert isinstance(widget, Gtk.Window)
                 show_about_dialog('Blueman ' + _('Device Manager'), parent=widget)
             case "plugins":
-                self.Applet.OpenPluginDialog()
+                self.Applet.open_plugin_dialog()
             case "services":
                 launch("blueman-services", name=_("Service Preferences"))
             case "preferences":

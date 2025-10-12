@@ -65,7 +65,7 @@ def check_bluetooth_status(message: str, exitfunc: Callable[[], Any]) -> None:
         exitfunc()
         return
 
-    if "PowerManager" not in applet.QueryPlugins():
+    if "PowerManager" not in applet.plugins:
         return
 
     if not powermanager.get_bluetooth_status():
