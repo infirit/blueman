@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Iterable, cast
+from typing import Iterable, Sequence, cast
 from gettext import gettext as _
 import logging
 
@@ -207,6 +207,10 @@ class AppletMenuService(ProxyBase):
         super().__init__(name=AppletService.NAME, interface_name="org.blueman.Applet.Menu",
                          object_path=AppletService.PATH)
 
+    def activate_menuitem(self, indexes: Sequence[int]) -> None:
+        param = GLib.Variant("(ai)", (indexes, ))
+        self.call_method_sync("ActivateMenuItem", param)
+
     def get_menu(self) -> Iterable[MenuItemDict]:
         result = self.call_sync("GetMenu", None, Gio.DBusCallFlags.NONE, -1, None)
         value = cast(Iterable[MenuItemDict], result.unpack()[0])
@@ -243,6 +247,9 @@ class AppletStatusIconService(ProxyBase):
     def __init__(self) -> None:
         super().__init__(name=AppletService.NAME, interface_name="org.blueman.Applet.StatusIcon",
                          object_path=AppletService.PATH)
+
+    def activate(self) -> None:
+        self.call_method_sync("Activate")
 
 
 class AppletServiceApplication(ProxyBase):

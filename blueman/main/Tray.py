@@ -64,10 +64,10 @@ class BluemanTray(Gio.Application):
         self.quit()
 
     def activate_menu_item(self, *indexes: int) -> None:
-        AppletMenuService().ActivateMenuItem('(ai)', indexes)
+        AppletMenuService().activate_menuitem(indexes)
 
     def activate_status_icon(self) -> None:
-        AppletMenuService().Activate()
+        AppletStatusIconService().activate()
 
     def on_signal(self, _applet: AppletMenuService | AppletStatusIconService, _sender_name: str, signal_name: str,
                   args: GLib.Variant) -> None:
