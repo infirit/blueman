@@ -173,7 +173,7 @@ class KillSwitch(AppletPlugin, PowerStateHandler, StatusIconVisibilityHandler):
                                             result_handler=reply, error_handler=error)
         else:
             logging.debug(f"Using mechanism to set state: {state}")
-            Mechanism().SetRfkillState('(b)', state, result_handler=reply, error_handler=error)
+            Mechanism().set_rfkill_state(state, reply, error)
 
     def on_query_force_status_icon_visibility(self) -> bool:
         # Force status icon to show if Bluetooth is soft-blocked

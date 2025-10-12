@@ -44,7 +44,7 @@ class DhcpClient(AppletPlugin):
             return
 
         if device != "":
-            def reply(_obj: Mechanism, result: str, _user_data: None) -> None:
+            def reply(result: str) -> None:
                 logging.info(result)
                 Notification(_("Bluetooth Network"),
                              _("Interface %(0)s bound to IP address %(1)s") % {"0": device, "1": result},
@@ -52,7 +52,7 @@ class DhcpClient(AppletPlugin):
 
                 self.querying.remove(device)
 
-            def err(_obj: Mechanism, result: GLib.Error, _user_data: None) -> None:
+            def err(result: GLib.Error) -> None:
                 logging.warning(result)
                 Notification(_("Bluetooth Network"), _("Failed to obtain an IP address on %s") % device,
                              icon_name="network-workgroup").show()
@@ -63,4 +63,4 @@ class DhcpClient(AppletPlugin):
                          icon_name="network-workgroup").show()
 
             m = Mechanism()
-            m.DhcpClient('(o)', object_path, result_handler=reply, error_handler=err, timeout=120 * 1000)
+            m.start_dhcp_client(object_path, reply, err)

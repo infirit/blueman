@@ -39,10 +39,10 @@ class Networking(AppletPlugin):
         if not self.Config["nap-enable"] or self.Config["ip4-address"] is None:
             return
 
-        def reply(_obj: Mechanism, _result: None, _user_data: None) -> None:
+        def reply(_result: None) -> None:
             pass
 
-        def err(_obj: Mechanism, result: GLib.Error, _user_data: None) -> None:
+        def err(result: GLib.Error) -> None:
             d = ErrorDialog("<b>Failed to apply network settings</b>",
                             "You might not be able to connect to the Bluetooth network via this machine",
                             result,
@@ -52,8 +52,8 @@ class Networking(AppletPlugin):
             d.destroy()
 
         m = Mechanism()
-        m.EnableNetwork('(sssb)', self.Config["ip4-address"], self.Config["ip4-netmask"], self.Config["dhcp-handler"],
-                        False, result_handler=reply, error_handler=err)
+        m.enable_network(self.Config["ip4-address"], self.Config["ip4-netmask"], self.Config["dhcp-handler"],
+                         address_changed=False, reply=reply, error=err)
 
     def on_unload(self) -> None:
         for adapter_path in self._registered:

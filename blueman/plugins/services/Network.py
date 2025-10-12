@@ -58,7 +58,7 @@ class Network(ServicePlugin):
 
                 try:
                     changed = net_ip.props.text != self.Config["ip4-address"]
-                    m.EnableNetwork('(sssb)', net_ip.props.text, "255.255.255.0", stype, changed)
+                    m.enable_network(net_ip.props.text, "255.255.255.0", stype, address_changed=changed)
 
                     if not self.Config["nap-enable"]:
                         self.Config["nap-enable"] = True
@@ -74,7 +74,7 @@ class Network(ServicePlugin):
                     return
             else:
                 self.Config["nap-enable"] = False
-                m.DisableNetwork()
+                m.disable_network()
 
             self.clear_options()
 

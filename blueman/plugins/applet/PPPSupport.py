@@ -50,12 +50,11 @@ class Connection:
                          path=f"/org/blueman/gsmsettings/{self.service.device['Address']}/")
 
         m = Mechanism()
-        m.PPPConnect('(uss)', self.port, c["number"], c["apn"], result_handler=self.on_connected,
-                     error_handler=self.on_error)
+        m.connect_ppp(self.port, c["number"], c["apn"], self.on_connected, self.on_error)
 
         return False
 
-    def on_error(self, _obj: Mechanism, result: GLib.Error, _user_data: None) -> None:
+    def on_error(self, result: GLib.Error) -> None:
         logging.info(f"Failed {result}")
         self.error_handler(result)
 
@@ -65,7 +64,7 @@ class Connection:
 
         GLib.timeout_add(1000, _connect)
 
-    def on_connected(self, _obj: Mechanism, result: str, _user_data: None) -> None:
+    def on_connected(self, result: str,) -> None:
         rfcomm_dev = f"/dev/rfcomm{self.port:d}"
         self.reply_handler(rfcomm_dev)
         for plugin in self.parent.Plugins.get_loaded_plugins(PPPConnectedListener):

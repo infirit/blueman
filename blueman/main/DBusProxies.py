@@ -36,26 +36,36 @@ class ProxyBase(Gio.DBusProxy, metaclass=SingletonGObjectMeta):
         except GLib.Error as e:
             raise DBusProxyFailed(e.message)
 
-    def call_method_sync(self, name: str, params: GLib.Variant | None = None) -> GLib.Variant:
-        return self.call_sync(name, params, Gio.DBusCallFlags.NONE, -1, None)
+    def call_method_sync(self, name: str, params: GLib.Variant | None = None, timeout: int = -1) -> GLib.Variant:
+        return self.call_sync(name, params, Gio.DBusCallFlags.NONE, timeout, None)
 
     def call_method(
             self,
             name: str,
             params: GLib.Variant,
-            reply: Callable[..., None],
-            error: Callable[[GLib.Error], None],
+            reply: Callable[..., None] | None = None,
+            error: Callable[[GLib.Error], None] | None = None,
             timeout: int = -1
     ) -> None:
         def call_finish(proxy: ProxyBase, response: Gio.AsyncResult) -> None:
             try:
                 result = proxy.call_finish(response)
-                reply(result)
+                if reply is None:
+                    logging.warning(f"Calling async method {name} without reply handler")
+                    return None
+                else:
+                    reply(result)
             except GLib.Error as e:
                 logging.error(f"Failed to execute method {name}", exc_info=True)
-                error(e)
+                if error is None:
+                    logging.warning(f"Calling async method {name} without error handler")
+                else:
+                    error(e)
 
+        if reply is None and error is None:
+            raise ValueError(f"Calling async method {name} without reply and error handlers")
         self.call(name, params, Gio.DBusCallFlags.NONE, timeout, None, call_finish)
+
 
 class DBus(ProxyBase):
     def __init__(self) -> None:
@@ -67,6 +77,57 @@ class Mechanism(ProxyBase):
     def __init__(self) -> None:
         super().__init__(name='org.blueman.Mechanism', interface_name='org.blueman.Mechanism',
                          object_path="/org/blueman/mechanism", systembus=True)
+
+    def start_dhcp_client(
+            self,
+            object_path: ObjectPath,
+            reply: Callable[..., None],
+            error: Callable[[GLib.Error], None]
+    ) -> None:
+        param = GLib.Variant("(o)", (object_path, ))
+        self.call_method("DhcpClient", param, reply, error, timeout=120 * 1000)
+
+    def enable_network(
+            self,
+            ip4_address: str,
+            ip4_netmask: str,
+            dhcp_handler: str,
+            reply: Callable[..., None] | None = None,
+            error: Callable[[GLib.Error], None] | None = None,
+            address_changed: bool = False
+    ) -> None:
+        param = GLib.Variant("(sssb)", (ip4_address, ip4_netmask, dhcp_handler, address_changed))
+        timeout = 120 * 1000
+        if reply is None and error is None:
+            self.call_method_sync("EnableNetwork", param, timeout)
+        else:
+            self.call_method("EnableNetwork", param, reply, error, timeout)
+
+    def disable_network(self) -> None:
+        self.call_method_sync("DisableNetwork", None)
+
+    def connect_ppp(
+            self,
+            port: int,
+            number: str,
+            apn: str,
+            reply: Callable[..., None],
+            error: Callable[[GLib.Error], None]
+    ) -> None:
+        param = GLib.Variant("(uss)", (port, number, apn))
+        self.call_method("PPPConnect", param, reply, error)
+
+    def open_rfcomm(self, port: int) -> None:
+        param = GLib.Variant("(n)", (port, ))
+        self.call_method_sync("OpenRFCOMM", param)
+
+    def close_rfcomm(self, port: int) -> None:
+        param = GLib.Variant("(n)", (port,))
+        self.call_method_sync("ClodeRFCOMM", param)
+
+    def set_rfkill_state(self, state: bool, reply: Callable[..., None], error: Callable[[GLib.Error], None]) -> None:
+        param = GLib.Variant("(b)", (state, ))
+        self.call_method("SetRfKillState", param, reply, error)
 
 
 class AppletService(ProxyBase):
@@ -113,6 +174,7 @@ class AppletService(ProxyBase):
         if not values:
             raise DBusProxyFailed("Applet has no loaded plugins!")
         return values
+
 
 class AppletPowerManagerService(ProxyBase):
     def __init__(self) -> None:

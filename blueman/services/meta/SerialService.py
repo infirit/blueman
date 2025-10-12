@@ -71,7 +71,7 @@ class SerialService(Service):
 
         logging.info(f'User was granted access to {path}')
         logging.info('Replacing root watcher')
-        Mechanism().CloseRFCOMM('(n)', port)
+        Mechanism().close_rfcomm(port)
         subprocess.Popen([RFCOMM_WATCHER_PATH, path])
         if port in self._handlerids:
             handler_id = self._handlerids.pop(port)
@@ -101,7 +101,7 @@ class SerialService(Service):
                                            channel)
             filename = f"/dev/rfcomm{port_id:d}"
             logging.info('Starting rfcomm watcher as root')
-            Mechanism().OpenRFCOMM('(n)', port_id)
+            Mechanism().open_rfcomm(port_id)
             mon = Gio.File.new_for_path(filename).monitor_file(Gio.FileMonitorFlags.NONE)
             self._handlerids[port_id] = mon.connect('changed', self.on_file_changed, port_id)
             self.try_replace_root_watcher(mon, filename, port_id)
@@ -122,7 +122,7 @@ class SerialService(Service):
         error_handler: Callable[[str], None] | None = None
     ) -> None:
         try:
-            Mechanism().CloseRFCOMM('(n)', port_id)
+            Mechanism().close_rfcomm(port_id)
         except GLib.Error as e:
             if error_handler:
                 error_handler(e.message)
