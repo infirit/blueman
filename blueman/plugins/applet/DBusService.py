@@ -1,10 +1,10 @@
 from gettext import gettext as _
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, cast
 from collections.abc import Callable
 from blueman.bluemantyping import ObjectPath
 
 from _blueman import RFCOMMError
-from gi.repository import GLib
+from gi.repository import Gio, GLib
 
 from blueman.Service import Service
 from blueman.bluez.errors import BluezDBusException
@@ -58,8 +58,58 @@ class DBusService(AppletPlugin):
         self._add_dbus_method("OpenPluginDialog", (), "", self._open_plugin_dialog)
 
         self._add_dbus_signal("PluginsChanged")
+        self._add_dbus_signal("BluezObjectAdded", ("o", "s"))
+        self._add_dbus_signal("BluezObjectRemoved", ("o", "s"))
+        self._add_dbus_signal("BluezInterfaceAdded", ("o", "s"))
+        self._add_dbus_signal("BluezInterfaceRemoved", ("o", "s"))
+
         self.parent.Plugins.connect("plugin-loaded", lambda *args: self._plugins_changed())
         self.parent.Plugins.connect("plugin-unloaded", lambda *args: self._plugins_changed())
+
+        self.__bluez_object_manager: Gio.DBusObjectManagerClient = Gio.DBusObjectManagerClient.new_for_bus_sync(
+            Gio.BusType.SYSTEM, Gio.DBusObjectManagerClientFlags.DO_NOT_AUTO_START,
+            "org.bluez", '/', None, None, None)
+        self.__bluez_object_manager.connect("object-added", self.__on_bluez_obj_signal, "BluezObjectAdded")
+        self.__bluez_object_manager.connect("object-removed", self.__on_bluez_obj_signal, "BluezObjectRemoved")
+        self.__bluez_object_manager.connect("interface-added", self.__on_bluez_iface_signal, "BluezInterfaceAdded")
+        self.__bluez_object_manager.connect("interface-removed", self.__on_bluez_iface_signal, "BluezInterfaceRemoved")
+
+    def __on_bluez_obj_signal(
+            self,
+            _object_manager: Gio.DBusObjectManager,
+            dbus_object: Gio.DBusObject,
+            signal: str
+    ) -> None:
+        adapter1 = "org.bluez.Adapter1"
+        device1 = "org.bluez.Device1"
+
+        adapter_interface = dbus_object.get_interface(adapter1)
+        device_interface = dbus_object.get_interface(device1)
+
+        object_path = cast(ObjectPath, dbus_object.get_object_path())
+
+        if adapter_interface is not None:
+            logging.debug(f"{signal} - {adapter1}: {object_path}")
+            self._emit_dbus_signal(signal, object_path, adapter1)
+        if device_interface is not None:
+            logging.debug(f"{signal} - {device1}: {object_path}")
+            self._emit_dbus_signal(signal, object_path, device1)
+
+    def __on_bluez_iface_signal(
+            self,
+            _object_manager: Gio.DBusObjectManagerClient,
+            _dbus_object: Gio.DBusObject,
+            interface: Gio.DBusInterface,
+            signal: str
+    ) -> None:
+        assert isinstance(interface, Gio.DBusProxy)
+        battery1 = "org.bluez.Battery1"
+        battery_interface_name = interface.get_interface_name()
+        object_path = cast(ObjectPath, interface.get_object_path())
+
+        if battery_interface_name == battery1:
+            logging.debug(f"{signal} - {battery1}: {object_path}")
+            self._emit_dbus_signal(signal, object_path, battery1)
 
     def _plugins_changed(self) -> None:
         self._emit_dbus_signal("PluginsChanged")
