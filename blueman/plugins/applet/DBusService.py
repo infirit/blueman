@@ -57,7 +57,7 @@ class DBusService(AppletPlugin):
         self._add_dbus_method("DisconnectService", ("o", "s", "d"), "", self._disconnect_service, is_async=True)
         self._add_dbus_method("OpenPluginDialog", (), "", self._open_plugin_dialog)
 
-        self._add_dbus_signal("PluginsChanged", "")
+        self._add_dbus_signal("PluginsChanged")
         self.parent.Plugins.connect("plugin-loaded", lambda *args: self._plugins_changed())
         self.parent.Plugins.connect("plugin-unloaded", lambda *args: self._plugins_changed())
 

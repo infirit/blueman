@@ -46,7 +46,7 @@ class AppletPlugin(BasePlugin):
             raise DBusNotImplementedError
         self._dbus_service.add_method(name, arguments, return_value, method, is_async=is_async)
 
-    def _add_dbus_signal(self, name: str, signature: str | tuple[str, ...]) -> None:
+    def _add_dbus_signal(self, name: str, signature: str | tuple[str, ...] = "") -> None:
         if self._dbus_service is None:
             raise DBusNotImplementedError
         self._dbus_service.add_signal(name, signature)
